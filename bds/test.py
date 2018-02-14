@@ -1,0 +1,1 @@
+print (type(map(lambda val:val>0,[1,3,5])))

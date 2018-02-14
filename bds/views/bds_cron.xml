@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data >
+     <!--
+    <record id="bds_fetch_1" model="ir.cron">
+            <field name="name">bds fetch 1</field>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">minutes</field>
+            <field name="numbercall">-1</field>
+            <field eval="False" name="doall"/>
+            <field eval="'cronfetch'" name="model"/>
+            <field eval="'fetch_cron'" name="function"/>
+            <field name="args" eval="()" />
+            </record>
+            
+            
+           
+   
+        <record id="bds_fetch_1" model="ir.cron">
+            <field name="name">bds fetch 1</field>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">minutes</field>
+            <field name="numbercall">-1</field>
+            <field eval="False" name="doall"/>
+            <field eval="'bds.fetch'" name="model"/>
+            <field eval="'fetch_cron'" name="function"/>
+            <field name="args" eval="(4,)" />
+            </record>
+             
+               
+           <record id="bds_cron_lazada" model="ir.cron">
+            <field name="name">lazada cron 1</field>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">minutes</field>
+            <field name="numbercall">-1</field>
+            <field eval="False" name="doall"/>
+            <field eval="'bds.fetch'" name="model"/>
+            <field eval="'fetch_laza_cron'" name="function"/>
+            <field name="args" eval="(3,)" />
+            </record>
+             
+            -->
+           
+   </data>
+</openerp>

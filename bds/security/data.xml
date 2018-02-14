@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record model="bds.url" id="url_bds_com_vn_quan_10">
+            <field name="description">bds.com.vn quận 10</field>
+            <field name="url">https://batdongsan.com.vn/ban-nha-dat-quan-10</field>
+        </record>
+        
+        <record model="bds.url" id="url_bds_com_vn_quan_5">
+            <field name="description">bds.com.vn quận 5</field>
+            <field name="url">https://batdongsan.com.vn/ban-nha-dat-quan-5</field>
+        </record>
+           <record model="bds.url" id="url_bds_com_vn_quan_q10_duoi_4ty">
+            <field name="description">bds.com.vn quận 10 duoi 4 ty</field>
+            <field name="url">https://batdongsan.com.vn/ban-nha-rieng-quan-10/-1/n-4000/-1/-1</field>
+        </record>
+           <record model="bds.url" id="url_chotot_quan_10">
+            <field name="description">bds.com.vn quận 10 duoi 4 ty</field>
+            <field name="url">https://gateway.chotot.com/v1/public/ad-listing?region=13&amp;area=105&amp;cg=1020&amp;limit=20&amp;o=0&amp;st=s,k</field>
+        </record>
+         <record model="bds.url" id="bds_quan_5_duoi_4_ty">
+            <field name="description">bds quận 5 dưới 4 tỷ</field>
+            <field name="url">https://batdongsan.com.vn/ban-nha-rieng-quan-5/-1/n-4000/-1/-1</field>
+        </record>
+        
+        
+           <record model="bds.url" id="url_chotot_quan_5">
+            <field name="description">Chợ tốt quận 5</field>
+            <field name="url">https://gateway.chotot.com/v1/public/ad-listing?region=13&amp;area=100&amp;cg=1020&amp;limit=20&amp;o=0&amp;st=s,k</field>
+        </record>
+        
+       <record model="bds.url" id="url_chotot_quan_tanbinh">
+            <field name="description">Chợ tốt quận Tân Bình</field>
+            <field name="url">https://gateway.chotot.com/v1/public/ad-listing?region=13&amp;area=112&amp;cg=1020&amp;limit=20&amp;o=0&amp;st=s,k</field>
+        </record>
+        
+	    <record model="bds.url" id="url_chotot_quan_3">
+            <field name="description">Chợ tốt quận 3</field>
+            <field name="url">https://gateway.chotot.com/v1/public/ad-listing?region=13&amp;area=98&amp;cg=1020&amp;limit=20&amp;o=0&amp;st=s,k   </field>
+        </record>
+        
+        <record model="bds.url" id="url_chotot_tan_phu">
+            <field name="description">Chợ tốt Tân phú</field>
+            <field name="url">https://gateway.chotot.com/v1/public/ad-listing?region=13&amp;area=113&amp;cg=1000&amp;limit=20&amp;o=0&amp;st=s,k</field>
+        </record>
+        
+        
+        
+	 </data>
+</odoo>
