@@ -37,6 +37,7 @@ headers = { 'User-Agent' : 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit
 
 def request_html(url):
     headers = { 'User-Agent' : 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36' }
+    print ( '**VERSION_INFO**',VERSION_INFO,'url',url)
     if VERSION_INFO == 3:
         req = url_lib.Request(url, None, headers)
         rp= url_lib.urlopen(req)
