@@ -113,6 +113,8 @@
                     </group>
                     <group>
                         <group>
+                         <field name="test_url"></field>
+                         <field name="test_html"></field>
                          <!--  <field name="lazada_url"></field>
                             <field name="input_text"></field>
                             <field name="html_lazada_thread_gia"></field>

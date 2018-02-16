@@ -749,8 +749,10 @@ class Fetch(models.Model):
     note = fields.Char()
     update_field_of_existing_recorder = fields.Selection([(u'giá',u'giá'),(u'all',u'all')],default = u'all')
     lazada_url = fields.Char()
-    input_text = fields.Char()
+    test_url = fields.Char()
+    test_html = fields.Text()
     invisible_or_show_html_lazada =  fields.Boolean(store=False)
+    
     test_lazada = fields.Text()
     html_lazada = fields.Text()
     html_lazada_thread = fields.Text()
@@ -762,14 +764,14 @@ class Fetch(models.Model):
             r.name = 'Fetch, id:%s-url_ids:%s-set_number_of_page_once_fetch: %s'%(r.id,u','.join(r.url_ids.mapped('name')),r.set_number_of_page_once_fetch)
     @api.multi
     def test_something(self):
-        html = request_html(self.input_text)
-        soup = BeautifulSoup(html, 'html.parser')
+        html = request_html(self.test_url)
+#         soup = BeautifulSoup(html, 'html.parser')
 #         soup.select('a[href^="http://example.com/"]')
 #         rs = soup.select('meta[property="og:image"]')
 #         log = u''
 #         log +=u'%s'%rs
 #         log +=u'%s'%map(lambda i:i['content'],rs)
-        self.html_lazada = html
+        self.test_html = html
 
     @api.multi
     def fetch_lazada(self):
