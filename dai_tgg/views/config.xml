@@ -1,0 +1,52 @@
+<openerp>
+  <data>
+
+            <!-- CVI config -->
+      <record id="ltk_config_settings_view" model="ir.ui.view">
+         <field name="name">ltk.config.settings</field>
+         <field name="model">ltk.config.settings</field>
+         <field name="arch" type="xml">
+            <form string="Configure Sales" class="oe_form_configuration" name="sale_config_form">
+               <header>
+                  <button string="Apply" type="object" name="execute" class="oe_highlight" />
+                  <button string="Cancel" type="object" name="cancel" class="oe_link" />
+               </header>
+               <sheet>
+                  <group>
+                     <field name="group_time_allow_field_edit_group" widget="radio" />
+                     <field name="is_cam_sua_do_time" />
+                     <field name="allow_edit_time" />
+                     <field name="is_cam_sua_truoc_ngay" />
+                     <field name="cam_sua_truoc_ngay" />
+                  </group>
+                  <group string="CV Pivot">
+                     <field name="is_cvi_id_in_pivot" />
+                  </group>
+                  <group>
+                  <field name="show_id_in_cvi_name_get"></field>
+                  </group>
+                  <group string="Show cột lãnh đạo trong các table công việc con trong công việc cha">
+                     <field name="group_show_cot_lanh_dao" widget="radio" />
+                  </group>
+                  <group>
+                     <field name="group_co_tvcv_giai_doan_con" widget="radio" />
+                     <field name="group_show_thong_tin_create_write" widget="radio" />
+                     <field name="group_show_loai_record" widget="radio" />
+                     <field name="group_show_thong_tin_admin_sep" widget="radio" />
+                     <field name="group_cho_xoa_cvi_cua_minh" widget="radio" />
+                  </group>
+               </sheet>
+            </form>
+         </field>
+      </record>
+      
+      <record id="ltk_config_settings_action" model="ir.actions.act_window">
+         <field name="name">Configure Sales</field>
+         <field name="type">ir.actions.act_window</field>
+         <field name="res_model">ltk.config.settings</field>
+         <!--   <field name="view_id" ref="view_sale_config_settings"/> -->
+         <field name="view_mode">form</field>
+         <field name="target">inline</field>
+      </record>
+  </data>
+</openerp>

@@ -1,0 +1,69 @@
+  
+      <openerp>
+  <data>
+  
+   <!-- IMPORT THƯ VIỆN -->
+      <record model="ir.ui.view" id="importthuvien_form">
+         <field name="name">import thu vien</field>
+         <field name="model">importthuvien</field>
+         <field name="arch" type="xml">
+            <form>
+               <header>
+                  <button name="importthuvien" string="import thư viện" type="object" class="btn-primary" />
+                  <button name="import_strect" string="import_strect" type="object" class="btn-primary" />
+                  <button name="map_noc_voi_ltk" string="map_kiemke_voi_noc" type="object" class="btn-primary" />
+                  <button name="map_noc_voi_ltk" string="map NOC voi LTK" type="object" class="btn-primary" />
+                  <button name="map_noc_voi_kiemke" string="map NOC voi KK" type="object" class="btn-primary" />
+                  <button name="get_tram_from_sheet_name" string="get_tram_from_sheet_name" type="object" class="btn-primary" />
+                  <button name="trigger" string="trigger" type="object" class="btn-primary" />
+                  <button name="test_code" string="test_code" type="object" class="btn-primary" />
+               </header>
+               <sheet>
+                  <group>
+                     <group>
+                        <field name="filename" />
+                        <field name="file" filename="filename" />
+                     </group>
+                     <group>
+                        <field name="type_choose" />
+                        <field name="log" />
+                        <field name="create_number" />
+                        <field name="update_number" />
+                        <field name="skipupdate_number" />
+                        <field name="write_date" />
+                        <field name="thong_bao_khac" />
+                        <field name="trigger_model" />
+                     </group>
+                  </group>
+               </sheet>
+            </form>
+         </field>
+      </record>
+      <record id="importthuvien_list" model="ir.ui.view">
+         <field name="name">import thu vien</field>
+         <field name="model">importthuvien</field>
+         <field name="arch" type="xml">
+            <tree>
+               <field name="id" />
+               <field name="type_choose" />
+               <field name="create_date" />
+               <field name="write_date" />
+            </tree>
+         </field>
+      </record>
+      <record model="ir.actions.act_window" id="importthuvien_action">
+         <field name="name">Import thư viện</field>
+         <field name="res_model">importthuvien</field>
+         <field name="view_mode">tree,form</field>
+      </record>
+      <!--  END IMPORT THƯ VIỆN -->
+      
+      
+      
+      
+<!-- import icon -->
+      <menuitem name="Import" id="import_icon" sequence="1" groups="base.group_erp_manager" />
+      <menuitem id="import_tvcv_menu" parent="import_icon" action="importthuvien_action" sequence="1" />
+      <!-- Công việc/ Ca Trực -->
+  </data>
+</openerp>
