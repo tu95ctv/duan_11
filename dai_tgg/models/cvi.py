@@ -104,7 +104,7 @@ class CamSua(models.Model):
     @api.multi
     def unlink(self):
         for r in self:
-            if not self.user_has_groups('dai_tgg.cho_xoa_cvi_cua_minh'):
+            if not self.user_has_groups('dai_tgg.cho_xoa_cvi_cua_minh') and  not  self.user_has_groups('base.group_erp_manager'):
                 raise UserError(u'Không được delete CV của mình')
             if r.cam_sua_do_time:
                 raise UserError(u'Không được delete do quá thời gian qui định')
@@ -116,7 +116,7 @@ class Cvi(models.Model):
     _name = 'cvi'
     _parent_name = 'gd_parent_id'
 #         _inherit = ['mail.thread']
-    _inherit = ['mail.thread','camsua','cvisuco']
+    _inherit = ['camsua','cvisuco']
     _auto = True
     _order = "id desc"
     ALLOW_WRITE_FIELDS_TIME = ['gio_ket_thuc','comment_ids','cd_children_ids','gd_children_ids','percent_diemtt']
@@ -274,8 +274,8 @@ class Cvi(models.Model):
     @skip_depends_if_not_congviec_decorator
     def thu_vien_da_chon_list_(self):
         for r in self:
-            if r.gd_children_ids:
-                r.thu_vien_da_chon_list = r.gd_children_ids.mapped('tvcv_id.id')
+#             if r.gd_children_ids:
+            r.thu_vien_da_chon_list = r.gd_children_ids.mapped('tvcv_id.id')
             
     
     @api.depends('tvcv_id')
@@ -626,10 +626,9 @@ class Cvi(models.Model):
         for r in self:
             if r.gd_children_ids:
                 self.constrains_cha_con(r)
+                r.user_id = False
             elif r.gd_parent_id:
                 self.constrains_cha_con(r.gd_parent_id)
-                
-                
     @api.constrains('slncl')
     def slncl_constrains(self):
         for r in self:
@@ -643,7 +642,6 @@ class Cvi(models.Model):
                     r.cd_parent_id.cd_children_ids.write({'ti_le_chia_diem':ti_le_chia_diem})
 #                 print 'ti_le_chia_diem',ti_le_chia_diem,'r.ti_le_chia_diem',r.ti_le_chia_diem,'r.ti_le_chia_diem==ti_le_chia_diem',r.ti_le_chia_diem==ti_le_chia_diem,'r.ti_le_chia_diem==33.33',r.ti_le_chia_diem==33.33
                 
-                  
     @api.constrains('loai_record','user_id')
     def user_id_constrains(self):
         for r in self:
@@ -651,8 +649,7 @@ class Cvi(models.Model):
                 if not r.gd_children_ids:
                     if not r.user_id:
                         raise ValidationError (u'Bạn phải nhập "Nhân Viên Làm" ')
-                elif r.gd_children_ids:
-                    r.user_id = False
+              
                 if r.cd_parent_id:
                     user_ids = [i.user_id.id for i in  r.cd_parent_id.cd_children_ids]
                     user_ids.append(r.cd_parent_id.user_id.id)

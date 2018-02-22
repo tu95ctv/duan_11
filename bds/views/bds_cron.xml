@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
     <data >
-     
+     <!--
     <record id="bds_fetch_1" model="ir.cron">
             <field name="name">bds fetch 1</field>
             <field name="user_id" ref="base.user_root"/>
@@ -13,8 +13,6 @@
             <field eval="'fetch_cron'" name="function"/>
             <field name="args" eval="()" />
             </record>
-          
-           <!--
         <record id="bds_fetch_1" model="ir.cron">
             <field name="name">bds fetch 1</field>
             <field name="user_id" ref="base.user_root"/>

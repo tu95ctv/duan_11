@@ -121,7 +121,8 @@
                               <field name="cam_sua" invisible="1" />
                               <field name="is_admin" invisible="1" />
                               <field name="is_sep" invisible="1" />
-                              <field name="user_id" attrs="{'readonly':[('cam_sua','=',True)],'required':True}" context="{'cd_user_id':parent.get('cd_user_id')}" domain="['|','|',('department_id','=',parent.department_id),('department_id','child_of',parent.department_id),('department_id','parent_of',parent.department_id)]" />
+                             <!--  <field name="user_id" attrs="{'readonly':[('cam_sua','=',True)],'required':True}" context="{'cd_user_id':parent.get('cd_user_id')}" domain="['|','|',('department_id','=',parent.department_id),('department_id','child_of',parent.department_id),('department_id','parent_of',parent.department_id)]" /> -->
+                             <field name="user_id" attrs="{'readonly':[('cam_sua','=',True)],'required':True}"  domain="['|','|',('department_id','=',parent.department_id),('department_id','child_of',parent.department_id),('department_id','parent_of',parent.department_id)]" />
                               <field name="gio_bat_dau" invisible="1" />
                               <field name="gio_ket_thuc" invisible="1" />
                               <field name="slncl" invisible="1" />
@@ -155,7 +156,8 @@
                               <field name="cam_sua" invisible="1" />
                               <field name="is_admin" invisible="1" />
                               <field name="is_sep" invisible="1" />
-                              <field name="user_id" attrs="{'readonly':[('cam_sua','=',True)]}" context="{'cd_user_id':parent.get('cd_user_id')}" domain="['|','|',('department_id','=',parent.department_id),                               ('department_id','child_of',parent.department_id),('department_id','parent_of',parent.department_id)]" />
+                           <!--   <field name="user_id" attrs="{'readonly':[('cam_sua','=',True)]}" context="{'cd_user_id':parent.get('cd_user_id')}" domain="['|','|',('department_id','=',parent.department_id),                               ('department_id','child_of',parent.department_id),('department_id','parent_of',parent.department_id)]" /> --> 
+                              <field name="user_id" attrs="{'readonly':[('cam_sua','=',True)]}"  domain="['|','|',('department_id','=',parent.department_id),                               ('department_id','child_of',parent.department_id),('department_id','parent_of',parent.department_id)]" />
                               <field name="gio_bat_dau" invisible="1" />
                               <field name="gio_ket_thuc" invisible="1" />
                               <field name="slncl" invisible="1" />
@@ -235,10 +237,12 @@
                      </page>
                   </notebook>
                </sheet>
+               <!-- 
                <div class="oe_chatter">
                     <field name="message_follower_ids" widget="mail_followers"/>
                     <field name="message_ids" widget="mail_thread"/>
                 </div>
+                 -->
             </form>
          </field>
       </record>
