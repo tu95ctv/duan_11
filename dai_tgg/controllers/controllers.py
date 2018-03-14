@@ -84,8 +84,8 @@ def add_header_TrungTamHaTangMang(worksheet,user_id,ROW_TRUNG_TAM,offset_column,
     worksheet.write(ROW_HO_TEN, VAL_COL,user_id.name,bold_style)
     worksheet.write(ROW_TRAM,KEY_COL, u'Trạm',normal_border_style_not_border)
     worksheet.write(ROW_TRAM,VAL_COL ,user_id.department_id.name,bold_style)
-    worksheet.write(ROW_SUM, KEY_COL,u'Điểm Tổng',normal_border_style_not_border)
-    
+    worksheet.write(ROW_SUM, KEY_COL,u'Điểm Tổng LĐ Chấm',normal_border_style_not_border)
+    worksheet.write(ROW_SUM, KEY_COL,u'Điểm Tổng Nhân Viên Chấm',normal_border_style_not_border)
     
 def add_title(FIELDNAME_FIELDATTR,cvi_fields,offset_column,worksheet,ROW_TITLE):
 #     ROW_TITLE = ROW_TRUNG_TAM + 5
@@ -121,7 +121,7 @@ def add_1_cvi_for_1_person(worksheet,FIELDNAME_FIELDATTR, r,offset_column,stt,ro
             if val == False:
                 val = u''
         worksheet.write(row_index, title_column_index, val, normal_border_style)    
-def add_sum_info(worksheet,FIELDNAME_FIELDATTR,offset_column,num2alpha,ROW_TITLE,ROW_SUM,VAL_COL,row_index):
+def add_sum_info(worksheet,FIELDNAME_FIELDATTR,offset_column,num2alpha,ROW_TITLE,ROW_SUM,VAL_COL,last_row_index):
     for title_column_index, field_from_my_FIELDNAME_FIELDATTR in enumerate(FIELDNAME_FIELDATTR):
         title_column_index += offset_column
         f_name,FIELDATTR =  field_from_my_FIELDNAME_FIELDATTR
@@ -129,18 +129,43 @@ def add_sum_info(worksheet,FIELDNAME_FIELDATTR,offset_column,num2alpha,ROW_TITLE
             pass
         else:
             if FIELDATTR.get('sum'):
+                intRowSum = FIELDATTR.get('row_sum')
+                intColSum = FIELDATTR.get('col_sum')
                 column_index_apha = num2alpha[title_column_index]
-                worksheet.write(ROW_SUM, VAL_COL, xlwt.Formula('SUM(%s%s:%s%s)'%(column_index_apha,ROW_TITLE + 2,column_index_apha,row_index)))
+#                 worksheet.write(ROW_TITLE, title_column_index, xlwt.Formula('SUM(%s%s:%s%s)'%(column_index_apha,ROW_TITLE + 2,column_index_apha,row_index)))
+                worksheet.write(intRowSum, intColSum, xlwt.Formula('SUM(%s%s:%s%s)'%(column_index_apha,ROW_TITLE + 2,column_index_apha,last_row_index)))
 
-def generate_domain_date(dlcv_obj, theo_sql = False):
+def filter_department_ids(department_ids):
+    if department_ids:
+#         department_ids = department_ids.ids
+#         if not  request.user_has_groups('base.group_erp_manager'):
+#             department_childs = request.env['hr.department'].search([('id','child_of',request.env.user.department_id.id)]).ids
+#             export_department_ids = [ x for x in department_ids if x in department_childs]
+#         else:
+        export_department_ids = department_ids.ids
+    else:
+        export_department_ids = [request.env.user.department_id.id]
+    return export_department_ids
+
+def generate_domain_date_and_department(dlcv_obj, theo_sql = False):
     domain = []
     if theo_sql == True:
         where_clause_list = []
-        if dlcv_obj.department_ids:
-            department_clause = ("cvi.department_id in %s"%(tuple( dlcv_obj.department_ids.ids),)).replace(',)',')')
+        department_ids = dlcv_obj.department_ids
+        export_department_ids = filter_department_ids(department_ids)
+        if export_department_ids:
+            if theo_sql:
+                department_clause = ("cvi.department_id in %s"%(tuple(export_department_ids),)).replace(',)',')')
+                where_clause_list.append(department_clause)
+            else:
+                domain.append(('department_id','in',export_department_ids))
         else:
-            department_clause = "cvi.department_id = %s"%request.env.user.id
-        where_clause_list.append(department_clause)
+            raise ValueError(u'Bạn không có quyền xem Báo cáo của những trạm đó')
+    
+    
+    
+
+    
     if dlcv_obj.chon_thang ==u'Tháng Này':
                 utc_time = datetime.datetime.now()
                 vn_time = convert_utc_to_gmt_7(utc_time)
@@ -152,7 +177,6 @@ def generate_domain_date(dlcv_obj, theo_sql = False):
                 else:
                     where_clause_list.append('cvi.ngay_bat_dau >= %s'%vn_thang_nay_date_begin)
                     where_clause_list.append('cvi.ngay_bat_dau < %s'%vn_thang_nay_date_end)
-                    
     elif dlcv_obj.chon_thang ==u'Tháng Trước':
         utc_time = datetime.datetime.now()
         vn_time = convert_utc_to_gmt_7(utc_time)
@@ -164,8 +188,6 @@ def generate_domain_date(dlcv_obj, theo_sql = False):
         else:
             where_clause_list.append("cvi.ngay_bat_dau >= '%s'"%thang_truoc_date_begin)
             where_clause_list.append("cvi.ngay_bat_dau < '%s'"%thang_truoc_date_end)
-                    
-                    
     else:
         if dlcv_obj.ngay_bat_dau_filter:
             if theo_sql == False:
@@ -185,25 +207,60 @@ def generate_domain_date(dlcv_obj, theo_sql = False):
     else:
         return domain
 
-
+def download_cvi(dlcv_obj):
+    
+    num2alpha = dict(zip(range(0, 26), string.ascii_uppercase))
+    normal_border_style_not_border = xlwt.easyxf("font:  name Times New Roman, height 240")
+    normal_border_style = xlwt.easyxf("font:  name Times New Roman, height 240 ;borders: left thin,right thin, top thin, bottom thin")
+    bold_style = xlwt.easyxf("font: bold on")
+    department_ids = dlcv_obj.department_ids
+    export_department_ids = filter_department_ids(department_ids)
+    user_ids = request.env['res.users'].search([('department_id','in',export_department_ids)])
+    workbook = xlwt.Workbook()
+    
+    offset_column = 0
+    ROW_TRUNG_TAM=0
+    ROW_SUM = ROW_TRUNG_TAM + 3
+    KEY_COL = offset_column + 3
+    VAL_COL = offset_column + 4
+    ROW_TITLE = ROW_TRUNG_TAM + 5
+    
+    FIELDNAME_FIELDATTR = [
+             ('stt',{'is_not_model_field':True,'string':u'STT'}),
+             ('ngay_bat_dau',{'func':convert_date_odoo_to_str_vn_date,'width':get_width(10)}),
+             ('code',{}),('tvcv_id_name',{'width':get_width(40)}),('noi_dung',{'width':get_width(40)}),
+             ('diem_tvi',{}),('so_luong',{}),('so_lan',{}),
+             ('diemtc',{'sum':True, 'row_sum':ROW_SUM+1,  'col_sum':VAL_COL}),
+             ('diemld',{'sum':True,'row_sum':ROW_SUM, 'col_sum':VAL_COL}),
+                        ]
+    domain = []
+    domain_date = generate_domain_date_and_department(dlcv_obj)
+    for user_id in user_ids:
+        domain_user = [('user_id','=',user_id.id),('loai_record','=',u'Công Việc')]
+        domain = expression.AND([domain_user, domain_date])
+        worksheet = workbook.add_sheet(user_id.name,cell_overwrite_ok=True)
+        add_header_TrungTamHaTangMang(worksheet,user_id,ROW_TRUNG_TAM,offset_column,normal_border_style_not_border,bold_style,ROW_SUM,KEY_COL,VAL_COL)
+        cvi_fields = request.env['cvi']._fields
+        add_title(FIELDNAME_FIELDATTR, cvi_fields, offset_column, worksheet, ROW_TITLE)
+        row_index = ROW_TITLE + 1
+        stt = 1
+        person_records = request.env['cvi'].search(domain,order='ngay_bat_dau')
+        for r in person_records:#request.env['cvi'].search([]):
+            add_1_cvi_for_1_person(worksheet,FIELDNAME_FIELDATTR, r,offset_column, stt, row_index, normal_border_style)
+            row_index +=1
+            stt +=  1
+        add_sum_info(worksheet,FIELDNAME_FIELDATTR,offset_column,num2alpha,ROW_TITLE,ROW_SUM,VAL_COL,row_index)
+        return workbook
+            
 class DownloadCvi(http.Controller):
     @http.route('/web/binary/download_cvi_by_userlist',type='http', auth="public")
     def download_cvi_by_userlist(self,model, id, **kw):
         dlcv_obj = request.env[model].browse(int(id))
-        where_clause = generate_domain_date (dlcv_obj, theo_sql = True)
+        where_clause = generate_domain_date_and_department (dlcv_obj, theo_sql = True)
         sql_cmd = '''select cvi.user_id,sum(diemtc),u.login,p.name from cvi inner join res_users as u on cvi.user_id = u.id inner join res_partner as p on u.partner_id = p.id %s group by cvi.user_id ,u.login,p.name'''
         sql_cmd = sql_cmd%((' where ' + where_clause )if where_clause else '')
         request.env.cr.execute(sql_cmd)
         rsul = request.env.cr.fetchall()
-        
-#         FIELDNAME_FIELDATTR = [
-#                  ('stt',{'is_not_model_field':True,'string':u'STT'}),
-#                  ('ngay_bat_dau',{'func':convert_date_odoo_to_str_vn_date,'width':get_width(10)}),
-#                  ('code',{}),('tvcv_id_name',{'width':get_width(40)}),('noi_dung',{'width':get_width(40)}),
-#                  ('diem_tvi',{}),('so_luong',{}),('so_lan',{}),
-#                  ('diemtc',{'sum':True})
-#                             ]
-        
         workbook = xlwt.Workbook()
         worksheet = workbook.add_sheet('Sheet 1')
         normal_border_style_not_border = xlwt.easyxf("font:  name Times New Roman, height 240")
@@ -218,11 +275,6 @@ class DownloadCvi(http.Controller):
             worksheet.write(row_index,2,diem,normal_border_style_not_border)
             row_index += 1
             stt +=1
-            
-            
-        
-        
-        
         response = request.make_response(None,
             headers=[('Content-Type', 'application/vnd.ms-excel'),
                     ('Content-Disposition', 'attachment; filename=table_cv_%s_%s.xls;'%(request.env.user.name, datetime.datetime.now().strftime('%d_%m_%H_%M')))],
@@ -233,308 +285,16 @@ class DownloadCvi(http.Controller):
     @http.route('/web/binary/download_cvi',type='http', auth="public")
     def download_cvi(self,model, id, **kw):
         dlcv_obj = request.env[model].browse(int(id))
-        num2alpha = dict(zip(range(0, 26), string.ascii_uppercase))
-        
-        normal_border_style_not_border = xlwt.easyxf("font:  name Times New Roman, height 240")
-        normal_border_style = xlwt.easyxf("font:  name Times New Roman, height 240 ;borders: left thin,right thin, top thin, bottom thin")
-        
-        bold_style = xlwt.easyxf("font: bold on")
-        if not request.env.user.user_has_groups('base.group_erp_manager'):
-            department_ids = [request.env.user.department_id.id]
-        else:
-            department_ids = dlcv_obj.department_ids.ids or [request.env.user.department_id.id]
-        user_ids = request.env['res.users'].search([('department_id','in',department_ids)])
-        workbook = xlwt.Workbook()
-        FIELDNAME_FIELDATTR = [
-                 ('stt',{'is_not_model_field':True,'string':u'STT'}),
-                 ('ngay_bat_dau',{'func':convert_date_odoo_to_str_vn_date,'width':get_width(10)}),
-                 ('code',{}),('tvcv_id_name',{'width':get_width(40)}),('noi_dung',{'width':get_width(40)}),
-                 ('diem_tvi',{}),('so_luong',{}),('so_lan',{}),
-                 ('diemtc',{'sum':True})
-                            ]
-        offset_column = 0
-        ROW_TRUNG_TAM=0
-        domain = []
-        domain_date = generate_domain_date(dlcv_obj)
-        for user_id in user_ids:
-            domain_user = [('user_id','=',user_id.id),('loai_record','=',u'Công Việc')]
-            domain = expression.AND([domain_user, domain_date])
-            worksheet = workbook.add_sheet(user_id.name,cell_overwrite_ok=True)
-            ROW_SUM = ROW_TRUNG_TAM + 3
-            KEY_COL = offset_column + 3
-            VAL_COL = offset_column + 4
-            add_header_TrungTamHaTangMang(worksheet,user_id,ROW_TRUNG_TAM,offset_column,normal_border_style_not_border,bold_style,ROW_SUM,KEY_COL,VAL_COL)
-            ROW_TITLE = ROW_TRUNG_TAM + 5
-            cvi_fields = request.env['cvi']._fields
-            add_title(FIELDNAME_FIELDATTR, cvi_fields, offset_column, worksheet, ROW_TITLE)
-            row_index = ROW_TITLE + 1
-            stt = 1
-            person_records = request.env['cvi'].search(domain,order='ngay_bat_dau')
-            for r in person_records:#request.env['cvi'].search([]):
-                add_1_cvi_for_1_person(worksheet,FIELDNAME_FIELDATTR, r,offset_column,stt,row_index,normal_border_style)
-                row_index +=1
-                stt +=  1
-            add_sum_info(worksheet,FIELDNAME_FIELDATTR,offset_column,num2alpha,ROW_TITLE,ROW_SUM,VAL_COL,row_index)
-        
-        
+        workbook = download_cvi(dlcv_obj)
         response = request.make_response(None,
             headers=[('Content-Type', 'application/vnd.ms-excel'),
-                    ('Content-Disposition', 'attachment; filename=table_cv_%s_%s.xls;'%(user_id.department_id.name,datetime.datetime.now().strftime('%d_%m_%H_%M')))],
+                    ('Content-Disposition', 'attachment; filename=chi_tiet_p3_%s_%s.xls;target=blank' %('_'.join(dlcv_obj.department_ids.mapped('name')), datetime.datetime.now().strftime('%d_%m_%H_%M')))],
             )
         workbook.save(response.stream)
         return response
         
     
-class PivotInherit(pivot.TableExporter):
-    @http.route('/web/pivot/export_xls_ahiihi', type='http', auth="user")
-    def export_xls(self, data, token):
-        jdata = json.loads(data)
-        #print 'jdata_data',jdata
-        nbr_measures = jdata['nbr_measures']
-        #print '**nbr_measures**',nbr_measures
+
         
-        workbook = xlwt.Workbook()
-        worksheet = workbook.add_sheet(jdata['title'])
-        header_bold = xlwt.easyxf("font: bold on; pattern: pattern solid, fore_colour gray25;")
-        header_plain = xlwt.easyxf("pattern: pattern solid, fore_colour gray25;")
-        bold = xlwt.easyxf("font: bold on;")
-
-        # Step 1: writing headers
-        headers = jdata['headers']
-        #print 'headers',headers
-        # x,y: current coordinates
-        # carry: queue containing cell information when a cell has a >= 2 height
-        #      and the drawing code needs to add empty cells below
-        x, y, carry = 1, 0, deque()
-        for i, header_row in enumerate(headers):
-            #print 'i',i
-            #print 'header_row',header_row
-            worksheet.write(i, 0, '', header_plain)
-            for header in header_row:
-                #print 'for header in header_row, header', header
-                while (carry and carry[0]['x'] == x):
-                    #print 'carry',carry
-                    cell = carry.popleft()
-                    for i in range(nbr_measures):
-                        worksheet.write(y, x+i, '', header_plain)
-                    if cell['height'] > 1:
-                        carry.append({'x': x, 'height': cell['height'] - 1})
-                    x = x + nbr_measures
-                style = header_plain if 'expanded' in header else header_bold
-                for i in range(header['width']):
-                    worksheet.write(y, x + i, header['title'] if i == 0 else '', style)
-                if header['height'] > 1:
-                    carry.append({'x': x, 'height': header['height'] - 1})
-                x = x + header['width']
-            while (carry and carry[0]['x'] == x):
-                cell = carry.popleft()
-                for i in range(nbr_measures):
-                    worksheet.write(y, x+i, '', header_plain)
-                if cell['height'] > 1:
-                    carry.append({'x': x, 'height': cell['height'] - 1})
-                x = x + nbr_measures
-            x, y = 1, y + 1
-
-        # Step 2: measure row
-        if nbr_measures > 1:
-            worksheet.write(y, 0, '', header_plain)
-            for measure in jdata['measure_row']:
-                style = header_bold if measure['is_bold'] else header_plain
-                worksheet.write(y, x, measure['measure'], style)
-                x = x + 1
-            y = y + 1
-
-        # Step 3: writing data
-        x = 0
-        for row in jdata['rows']:
-            #print 'row',row
-            worksheet.write(y, x, row['indent'] * '     ' + ustr(row['title']), header_plain)
-            for cell in row['values']:
-                x = x + 1
-                if cell.get('is_bold', False):
-                    worksheet.write(y, x, cell['value'], bold)
-                else:
-                    worksheet.write(y, x, cell['value'])
-            x, y = 0, y + 1
-
-        response = request.make_response(None,
-            headers=[('Content-Type', 'application/vnd.ms-excel'),
-                    ('Content-Disposition', 'attachment; filename=table.xls;')],
-            cookies={'fileToken': token})
-        workbook.save(response.stream)
-
-        return response
-        
-        
-# class Binary(http.Controller):
-#     
-#     @api.multi
-#     @http.route('/web/binary/download_tuantra',type='http', auth="public")
-#     @serialize_exception
-#     def download_tuantra(self,id, **kw):
-#         
-#         
-#         workbook = xlwt.Workbook()
-#         worksheet = workbook.add_sheet('Sheet 1',cell_overwrite_ok=True)
-#         
-#         ALIGN_BORDER_dict = {'align':{'horiz': 'left','vert':'centre','wrap':'yes'},
-#                      "borders":{'left':'thin', 'right': 'thin', 'top': 'thin', 'bottom': 'thin'}
-#                      }
-# 
-#         title_format_dict = deepcopy(ALIGN_BORDER_dict)
-#         title_format_dict['align']['horiz'] = 'centre'
-#         title_format_dict['font'] = {"bold":"on"}
-#         title_format_txt = FIELDNAME_FIELDATTR_flat(title_format_dict)
-#         title_format_style = xlwt.easyxf(title_format_txt)
-#         normal_txt = FIELDNAME_FIELDATTR_flat(ALIGN_BORDER_dict)
-#         normal_style = xlwt.easyxf(normal_txt)
-#         
-#         
-#         worksheet.write_merge(0, 0, 0 , 15,u"BÁO CÁO TUẦN TRA NGÀY 20/09/2017",title_format_style)
-#         worksheet.write_merge(1, 2, 0 ,0,u"STT",title_format_style)
-#         worksheet.write_merge(1, 2, 1 ,1,u"Trạm",title_format_style)
-#         worksheet.write_merge(1, 2, 2 ,2,u"Hướng Tuyến",title_format_style)
-#         worksheet.write_merge(1, 2, 3 ,3,u"TTV – GSV",title_format_style)
-#         worksheet.write_merge(1, 2, 4 ,4,u"GPS",title_format_style)        
-#         worksheet.write_merge(1, 1, 5 ,6,u"LƯỢT ĐI",title_format_style)  
-#         worksheet.write_merge(2, 2, 5 ,5,u"GIỜ ĐI",title_format_style)  
-#         worksheet.write_merge(2, 2, 6 ,6,u"GIỜ ĐẾN",title_format_style)  
-# 
-#         worksheet.write_merge(1, 1, 7 ,8,u"LƯỢT VỀ",title_format_style)  
-#         worksheet.write_merge(2, 2, 7 ,7,u"GIỜ ĐI",title_format_style)  
-#         worksheet.write_merge(2, 2, 8 ,8,u"GIỜ ĐẾN",title_format_style) 
-#         
-#         worksheet.write_merge(1, 1, 9 ,10,u"SỐ ĐIỆN THOẠI",title_format_style)  
-#         worksheet.write_merge(2, 2, 9 ,9,u"ĐẦU TUYẾN",title_format_style)  
-#         worksheet.write_merge(2, 2, 10 ,10,u"CUỐI TUYẾN",title_format_style)  
-#          
-#         worksheet.write_merge(1, 2, 11 ,11,u"nội dung",title_format_style)
-# 
-#         worksheet.write_merge(1, 1, 12 ,14,u"KẾ HOẠCH NGÀY HÔM SAU",title_format_style)  
-#         worksheet.write_merge(2, 2, 12 ,12,u"Tuần tra",title_format_style)  
-#         worksheet.write_merge(2, 2, 13 ,13,u"Giám sát",title_format_style)  
-#         worksheet.write_merge(2, 2, 14,14,u"Bảo dưỡng – Xử Lý",title_format_style)  
-#         
-#         worksheet.write_merge(1, 2, 15 ,15,u"ghi chú",title_format_style)
-#         worksheet.write_merge(1, 2, 16 ,16,u"kiến nghị",title_format_style)
-#         
-#         
-#         fp = StringIO()
-#         workbook.save(fp)
-#         fp.seek(0)
-#         data = fp.read()
-#         fp.close()
-#         
-#         return request.make_response(
-#             data,
-#             #self.from_data(columns_headers, rows),
-#             headers=[
-#                 ('Content-Disposition', 'attachment; filename="bao_cao_tuan_tra_cq.xls"'),
-#                 ('Content-Type', 'application/octet-stream')
-#             ],
-#             #cookies={'fileToken': token}
-#         )
-#    
-#     
-#         
-#         
-#         
-#     @api.multi
-#     @http.route('/web/binary/download_document',type='http', auth="public")
-#     @serialize_exception
-#     def download_document(self,id, **kw):
-#         
-#         sitetype = kw['sitetype']
-#         if 'mode_1900' in kw:
-#             mode_1900 = True
-#         else:
-#             mode_1900 = False
-#             
-#         workbook = xlwt.Workbook()
-#         worksheet = workbook.add_sheet('Sheet 1',cell_overwrite_ok=True)
-#         
-#         ALIGN_BORDER_dict = {'align':{'horiz': 'left','vert':'centre','wrap':'yes'},
-#                      "borders":{'left':'thin', 'right': 'thin', 'top': 'thin', 'bottom': 'thin'}
-#                      }
-# 
-#         title_format_dict = deepcopy(ALIGN_BORDER_dict)
-#         title_format_dict['align']['horiz'] = 'centre'
-#         title_format_dict['font'] = {"bold":"on"}
-#         title_format_txt = FIELDNAME_FIELDATTR_flat(title_format_dict)
-#         title_format_style = xlwt.easyxf(title_format_txt)
-#         normal_txt = FIELDNAME_FIELDATTR_flat(ALIGN_BORDER_dict)
-#         normal_style = xlwt.easyxf(normal_txt)
-#         date_style = xlwt.easyxf(normal_txt, num_format_str='DD/MM/YYYY')
-#         worksheet.write_merge(0, 0, 0 , 4,u"Danh sách Update thông tin đối tượng",title_format_style)
-#         worksheet.write(1, 0,u"STT",title_format_style)
-#     
-#         worksheet.write(1, 1,u"Mã đối tượng",title_format_style)
-#         worksheet.write(1, 2,u"Thuộc Tính",title_format_style)
-#         worksheet.write(1, 3,u"Giá trị cập nhật",title_format_style)
-#         worksheet.write(1, 4,u"Ghi chú",title_format_style)
-#         row_index = 1
-#         
-#         
-#         worksheet.col(1).width =int(20*260)
-#         worksheet.col(2).width =int(25*260)
-#         worksheet.col(3).width =int(20*260)
-#             
-#             
-#         if mode_1900:
-#             if sitetype=='3G':
-#                 env = 'nodeb'
-#             elif sitetype =='4G':
-#                 env = 'enodeb'
-#             elif sitetype=='2G':
-#                 env='bts'
-#             
-#             for i in request.env[env].search([('ngay_bao_duong','=',False)]):
-#                 row_index+=1
-#                 worksheet.write(row_index, 1,i.ma_tram,normal_style)
-#                 worksheet.write(row_index, 2, u'Thời gian bảo dưỡng',normal_style)
-#                 worksheet.write(row_index, 3,datetime.date(1900, 1, 1),date_style)
-#                 worksheet.write(row_index, 4, u'',normal_style)
-# 
-#                 row_index+=1
-#                 worksheet.write(row_index, 1,i.ma_tram,normal_style)
-#                 worksheet.write(row_index, 2, u'Đơn vị thực hiện',normal_style)
-#                 worksheet.write(row_index, 3,u'Đài VT TGG',normal_style)
-#                 worksheet.write(row_index, 4, u'',normal_style)
-#         else:
-#             import_tuan_id = id
-#             model_class = request.env['importbdtuan']
-#             import_tuan = model_class.browse(int(import_tuan_id))
-#             lineimports = import_tuan.lineimports
-#             loop = lineimports
-#             for line in loop:
-#                 if import_tuan.tuan_export and line.week_number !=import_tuan.tuan_export:
-#                         continue
-#                 if sitetype =='2G':
-#                     ma_doi_tuong = line.bts_id.ma_tram
-#                 elif sitetype=='3G':
-#                     ma_doi_tuong = line.nodeb_id.ma_tram
-#                 date_bd  = fields.Datetime.from_string(line.date)
-#                 if ma_doi_tuong:
-#                     row_index+=1
-#                     worksheet.write(row_index, 1,ma_doi_tuong,normal_style)
-#                     worksheet.write(row_index, 2, u'Thời gian bảo dưỡng',normal_style)
-#                     worksheet.write(row_index, 3,date_bd,date_style)
-#                     worksheet.write(row_index, 4, u'',normal_style)
-#         fp = StringIO()
-#         workbook.save(fp)
-#         fp.seek(0)
-#         data = fp.read()
-#         fp.close()
-#         
-#         return request.make_response(
-#             data,
-#             #self.from_data(columns_headers, rows),
-#             headers=[
-#                 ('Content-Disposition', 'attachment; filename="import_rnas_%s.xls"'%sitetype),
-#                 ('Content-Type', 'application/octet-stream')
-#             ],
-#             #cookies={'fileToken': token}
-#         )
-
 
         

@@ -59,9 +59,9 @@ class CamSua(models.Model):
             if not r.id:
                 r.ly_do_cam_sua_do_time = u'Không cấm sửa do new'
                 r.cam_sua_do_time = False
-            if self.user_has_groups('dai_tgg.time_allow_field_edit_group') or self.user_has_groups('base.group_erp_manager'):
-                r.ly_do_cam_sua_do_time = u'Không cấm sửa do nằm trong group hoặc edmin'
-                r.cam_sua_do_time = False
+#             if self.user_has_groups('dai_tgg.time_allow_field_edit_group') or self.user_has_groups('base.group_erp_manager'):
+#                 r.ly_do_cam_sua_do_time = u'Không cấm sửa do nằm trong group hoặc edmin'
+#                 r.cam_sua_do_time = False
             elif self.env['ir.values'].get_default('ltk.config.settings', 'is_cam_sua_truoc_ngay'):
                 cam_sua_truoc_ngay = self.env['ir.values'].get_default('ltk.config.settings', 'cam_sua_truoc_ngay')
                 if fields.Date.from_string(r.ngay_bat_dau) < fields.Date.from_string(cam_sua_truoc_ngay):
@@ -83,20 +83,17 @@ class CamSua(models.Model):
         for r in self:
             if not r.id:
                 r.ly_do_cam_sua_do_diff_user = u'Ko Cấm do new'
-                cam_sua =  False
+                cam_sua_do_diff_user =  False
             elif self.user_has_groups('base.group_erp_manager'):
                 r.ly_do_cam_sua_do_diff_user = u'Ko Cấm do user là admin'
-                cam_sua =  False
-#             elif self.env.uid in r.user_id.cac_sep_ids.mapped('id'):
-#                 r.ly_do_cam_sua_do_diff_user = u'Ko Cấm do user là Sếp'
-#                 cam_sua =  False
+                cam_sua_do_diff_user =  False
             else:
-                cam_sua = r.create_uid != self.env.user 
-                if cam_sua:
+                cam_sua_do_diff_user = r.create_uid != self.env.user 
+                if cam_sua_do_diff_user:
                     r.ly_do_cam_sua_do_diff_user = u'Cấm do khác user'
                 else:
                     r.ly_do_cam_sua_do_diff_user = u'Không cấm do cùng User'
-            r.cam_sua_do_diff_user =  cam_sua
+            r.cam_sua_do_diff_user =  cam_sua_do_diff_user
     @api.multi
     def write(self,vals):
         res = super(CamSua,self).write(vals)
@@ -104,12 +101,14 @@ class CamSua(models.Model):
     @api.multi
     def unlink(self):
         for r in self:
-            if not self.user_has_groups('dai_tgg.cho_xoa_cvi_cua_minh') and  not  self.user_has_groups('base.group_erp_manager'):
-                raise UserError(u'Không được delete CV của mình')
-            if r.cam_sua_do_time:
-                raise UserError(u'Không được delete do quá thời gian qui định')
-            elif r.cam_sua_do_diff_user:
-                raise UserError(u'Không được delete do  bạn ko phải là chủ thread')
+#             if not self.user_has_groups('dai_tgg.cho_xoa_cvi_cua_minh') and  not  self.user_has_groups('base.group_erp_manager'):
+#                 raise UserError(u'Không được delete CV của mình')
+#             if r.cam_sua_do_time:
+#                 raise UserError(u'Không được delete do quá thời gian qui định')
+#             elif r.cam_sua_do_diff_user:
+#                 raise UserError(u'Không được delete do  bạn ko phải là chủ thread')
+            if r.cam_sua:
+                raise UserError(u'Không được Xóa')
         res = super(CamSua, self).unlink()
         return res 
 class Cvi(models.Model):
@@ -124,14 +123,22 @@ class Cvi(models.Model):
     ALLOW_WRITE_FIELDS_DIFF_USER = ['gio_ket_thuc','comment_ids','cd_children_ids','gd_children_ids','percent_diemtc']
     IS_CAM_SUA_DO_CHOT = True
 
-    @api.depends('user_id','create_uid','trig_field')
+#     def department_id_(self):
+#         for r in self:
+#             if r.user_id:
+#                 r.department_id = r.user_id.department_id
+#             else:
+#                 r.department_id = r.create_uid.department_id
+#     @api.depends('user_id','create_uid','trig_field')
+    @api.onchange('user_id','create_uid','trig_field')
     def department_id_(self):
         for r in self:
             if r.user_id:
                 r.department_id = r.user_id.department_id
-            else:
-                r.department_id = r.create_uid.department_id
-   
+#             else:
+# #                 r.department_id = r.create_uid.department_id
+#                 r.department_id =  self.env.user.department_id
+#    
 #     loai_record = fields.Selection([(u'Công Việc',u'Công Việc'),(u'Sự Cố',u'Sự Cố'),(u'Sự Vụ',u'Sự Vụ')], string = u'Loại Record')
 #     name = fields.Char(compute='name_',store=True)
 #     ngay_bat_dau =  fields.Date(compute='ngay_bat_dau_',store=True,string=u'Ngày',translate=True)
@@ -227,21 +234,11 @@ class Cvi(models.Model):
                 r.ly_do_cam_sua_do_diff_user = u'Ko Cấm do user là admin'
                 cam_sua =  False
             else:
-#                 cam_sua = r.create_uid != self.env.user and  r.user_id != self.env.user
-#                 if r.user_id:
+
                 if ( r.user_id == self.env.user) or (r.create_uid == self.env.user):
                     cam_sua = False
                 else:
                     cam_sua = True
-#                     if r.user_id != self.env.user:
-#                         if r.create_uid == self.env.user:# and not het_time(r,TIME_ALLOW_SECONDS):
-#                             cam_sua = False
-#                         else:
-#                             cam_sua = True
-#                     else:
-#                         cam_sua = False
-#                 else:# giai doan cha
-#                     cam_sua = r.create_uid != self.env.user
                 if cam_sua:
                     r.ly_do_cam_sua_do_diff_user = u'Cấm do khác user'
                 else:
@@ -287,12 +284,9 @@ class Cvi(models.Model):
     @api.multi
     def cam_sua_(self):
         for r in self:
-            cam_sua = r.cam_sua_do_time or r.cam_sua_do_diff_user and not r.is_sep
+            cam_sua = r.cam_sua_do_time or (r.cam_sua_do_diff_user and not r.is_sep)
             r.cam_sua = cam_sua
-#             
-#             if cam_sua:
-#                 if r.is_sep:
-#                     cam_sua =  False
+
     @api.multi
     @skip_depends_if_not_congviec_decorator
     def is_sep_(self):
@@ -358,19 +352,7 @@ class Cvi(models.Model):
                 r.diem_goc = r.cd_parent_id.tvcv_id.diem * r.cd_parent_id.so_luong * r.cd_parent_id.so_lan
             else:
                 r.diem_goc = r.so_luong * r.so_lan * r.tvcv_id.diem
-#     @api.depends( 'slncl', 'diem_goc','cd_parent_id.diem_goc','len_gd_child','loai_record','')
-#     @skip_depends_if_not_congviec_decorator
-#     def diemtt_(self):
-#         for r in self:
-#                 if r.cd_parent_id:#cv chia diem con
-#                     r.diemtt = r.cd_parent_id.diem_goc/r.slncl
-#                 elif r.slncl > 1:#CD Cha
-#                     r.diemtt = r.diem_goc/r.slncl
-#                 elif r.len_gd_child:  #giai doan cha
-#                     r.diemtt =0
-#                     r.user_id = False
-#                 else: 
-#                     r.diemtt = r.diem_goc      
+
 
     @api.depends( 'slncl', 'diem_goc','cd_parent_id.diem_goc','len_gd_child','loai_record','ti_le_chia_diem')
     @skip_depends_if_not_congviec_decorator
@@ -388,16 +370,6 @@ class Cvi(models.Model):
                 else: 
                     r.diemtc = r.diem_goc           
 
-
-    
-    
-#     @api.depends('diemtt','percent_diemtt')    
-#     @skip_depends_if_not_congviec_decorator
-#     def diemtc_(self):
-#         for r in self:
-#             r.diemtc = r.diemtt * r.percent_diemtt/100 
-    
-    
     
     
     @api.depends('ti_le_chia_diem','slncl','cd_children_ids.ti_le_chia_diem')
@@ -435,10 +407,6 @@ class Cvi(models.Model):
     
     def valid_gd_chung_cha_con(self,r):
         sai_so = abs(r.sum_gd_con - r.diem_goc )
-        #sai_so_cua_tv = 0.0005
-#         sai_so_cua_diem_goc_cha = 0.005
-#         sai_so_diem_goc_moi_con = 0.0005*r.so_luong + 0.005
-#         sai_so_cua_sum = (0.0005*r.so_luong + 0.005)*r.len_gd_child + 0.005
         sai_so_lon_nhat = 0.005*r.len_gd_child*r.so_luong*r.so_lan
         if  sai_so <= sai_so_lon_nhat:
             valid_gd = True
@@ -457,14 +425,11 @@ class Cvi(models.Model):
                 r.valid_gd = self.valid_gd_chung_cha_con(r.gd_parent_id)
             elif r.len_gd_child:
                 r.valid_gd = self.valid_gd_chung_cha_con(r)
-                #print '11-11 GD_Cha %s - r.valid giai doan %s ' %(r.id,r.valid_gd )
-            #print '11-11 After  valid_cd %s' %r.id
 
     @api.depends('valid_gd','valid_cd','hd_children_ids','loai_record')
     @skip_depends_if_not_congviec_decorator_valid_diemtc
     def valid_diemtc_(self):
         for r in self:
-            #Chia điểm con
             if not r.id:
                 pass
             else:
@@ -498,7 +463,6 @@ class Cvi(models.Model):
                     if not r.valid_diemtc:
                         r.valid_diemtc_conclusion =  u'Thiếu giai đoạn'
                 elif r.hd_parent_id:
-#                                  (u'Chung Điểm Cha',u'Chung Điểm Cha'),(u'Chung Điểm Con',u'Chung Điểm Con'),
                     r.loai_cvi = u'Chung Điểm Con'
                     r.valid_diemtc = True
                 elif r.hd_children_ids:

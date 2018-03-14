@@ -8,13 +8,11 @@
             <search string="Search ca truc">
                <field name="member_ids" />
                <field name="id" />
-               <field name="cvi_ids" string="search theo loại hoặc nội dung hoặc id công việc, sự cố, sự vụ " filter_domain="['|','|',('cvi_ids.name','ilike',self),('cvi_ids.tvcv_id.name','ilike',self),('cvi_ids.noi_dung','ilike',self)]" />
-               <!-- 
-               <field name="su_co_ids" filter_domain="['|',('su_co_ids.loai_su_co_id.name','ilike',self),('su_co_ids.noi_dung','ilike',self)]" />
-               <field name="su_vu_ids" filter_domain="['|',('su_vu_ids.loai_su_vu_id.name','ilike',self),('su_vu_ids.noi_dung','ilike',self)]" />
-                -->
+               <field name="cvi_ids" string="search theo loại hoặc nội dung hoặc id công việc, sự cố, sự vụ " filter_domain="['|','|','|','|',('cvi_ids.name','ilike',self),('cvi_ids.tvcv_id.name','ilike',self),('cvi_ids.tvcv_id.name_khong_dau','ilike',self),('cvi_ids.noi_dung','ilike',self),('cvi_ids.noi_dung_khong_dau','ilike',self)]" />
                <group string="Group By Đơn vị">
                   <filter string="Đơn Vị" context="{'group_by' : 'department_id'}" />
+                  <filter string="date" context="{'group_by' : 'date'}" />
+                  <filter string="month" context="{'group_by' : 'date:month'}" />
                </group>
             </search>
          </field>
@@ -33,7 +31,6 @@
                         <field name="ca" />
                         <field name="gio_bat_dau_ca" invisible="1" />
                         <field name="gio_ket_thuc_ca" invisible="1" />
-                      <!--  <field name="cvi_loc"></field> --> 
                      </group>
                      <group>
                         <field name="member_ids"        
@@ -75,45 +72,21 @@
             </form>
          </field>
       </record>
-      <!-- 
-      <record model="ir.ui.view" id="session_calendar_view">
-         <field name="name">ctr.calendar</field>
-         <field name="model">ctr</field>
-         <field name="arch" type="xml">
-            <calendar string="Trucca Calendar" date_start="date" color="member_ids">
-               <field name="name" />
-            </calendar>
-         </field>
-      </record>
-       -->
       <record id="ctr_list" model="ir.ui.view">
          <field name="name">Truc ca</field>
          <field name="model">ctr</field>
          <field name="arch" type="xml">
             <tree>
-               <!--    <field name="name" />
-              <field name="su_co_ids"></field> -->
                <field name="id" />
                <field name="date" />
                <field name="ca" />
-               <!-- 
-               <field name="gio_bat_dau_ca" invisbile="1" />
-               <field name="gio_ket_thuc" invisbile="1" />
-                -->
-               <!--  <field name="cvi_ids" widget="one2many_list" /> -->
                <field name="cvi_show" />
-               <!-- 
-               <field name="su_co_ids" />
-               <field name="su_vu_ids" />
-                -->
                <field name="member_ids" />
                <field name="department_id" />
-               
                     <field name="create_uid" string="Người tạo" groups="dai_tgg.show_thong_tin_create_write"></field>
                     <field name="write_uid" string="Người sửa" groups="dai_tgg.show_thong_tin_create_write"></field>
                     <field name="create_date" string="Ngày giờ Tạo" groups="dai_tgg.show_thong_tin_create_write"></field>
                     <field name="write_date" string="Ngày giờ sửa" groups="dai_tgg.show_thong_tin_create_write"></field>
-                     
             </tree>
          </field>
       </record>
@@ -123,10 +96,6 @@
          <field name="groups" eval="[(4, ref('base.group_user'))]" />
          <field name="view_mode">tree,form</field>
       </record>
-   
-   
-   
-   
    <menuitem name="Menu Ca trực" id="ctrmenu_menu" parent="ctrtvcv_icon" action="ctr_action" sequence="2" />
       <menuitem name="Ca trực" id="ctr_menu" parent="ctrmenu_menu" action="ctr_action" sequence="1" />
       <menuitem id="suco_menu" parent="ctrmenu_menu" action="suco_action" sequence="2" />

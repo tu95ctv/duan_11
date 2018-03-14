@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# print type('adfadfd'.join([]))
-import re
-print (re.search('\S','#'))
 
+adict = {'a':'a','b':adict['a']}
+print (adict)

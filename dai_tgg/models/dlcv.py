@@ -7,21 +7,44 @@ from odoo.addons.dai_tgg.mytools import  convert_utc_to_gmt_7
 from dateutil.relativedelta import relativedelta
 
 
-
-class DLCV(models.Model):
+import os,sys,inspect
+from odoo.addons.dai_tgg.controllers.controllers import download_cvi
+# def download_cvi(a):
+#     pass
+class DLCV(models.TransientModel):
     _name = 'dlcv'
-    ngay_bat_dau_filter = fields.Date()
-    ngay_ket_thuc_filter = fields.Date()
-    chon_thang = fields.Selection([(u'Tháng Trước',u'Tháng Trước'),(u'Tháng Này',u'Tháng Này')])
+    ngay_bat_dau_filter = fields.Date(string=u'Ngày Bắt Đầu')
+    ngay_ket_thuc_filter = fields.Date(string=u'Ngày Kết Thúc')
+    is_show_diem_nhan_vien = fields.Boolean(string=u'Có show cột điểm nhân viên không?')
+    chon_thang = fields.Selection([(u'Tháng Trước',u'Tháng Trước'),(u'Tháng Này',u'Tháng Này')],string = u'Chọn tháng')
     department_ids = fields.Many2many('hr.department')
-    member_ids = fields.Many2many('res.users')
-    gio_utc = fields.Datetime()
-    gio_vn = fields.Datetime()
-    rs_cvi_ids = fields.Many2many('cvi')
-    log =  fields.Text()
-    log2 =  fields.Text()
+#     member_ids = fields.Many2many('res.users')
+#     gio_utc = fields.Datetime()
+#     gio_vn = fields.Datetime()
+#     rs_cvi_ids = fields.Many2many('cvi')
+#     log =  fields.Text()
+#     log2 =  fields.Text()
+
     @api.multi
-    def download_cvi(self):
+    def download_cvi_binh(self):
+#         download_cvi(self)
+        workbook = download_cvi(self)
+        currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+        dir_tmp = os.path.dirname(currentdir) + '/static/'
+        
+        workbook.save(dir_tmp + 'abc.xls')
+        return {
+            'type' : 'ir.actions.act_url',
+            'url': '/dai_tgg/static/%s' % ('abc.xls'),
+            'target': 'blank',
+        }
+        
+        
+
+#         
+    @api.multi
+    def download_cvi_o(self):
+
         return {
              'type' : 'ir.actions.act_url',
              #'url': '/web/binary/download_document?model=importbd&field=file&id=%s&filename=product_stock.xls'%(self.id),

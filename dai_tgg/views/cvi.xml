@@ -11,12 +11,9 @@
                <field name="id" />
                <field name="name" />
                <field name="user_id" />
-               <field name="tvcv_id" string="Search Theo mã thư viện hoặc tên thư viện" filter_domain="['|',('tvcv_id.name','ilike',self),('tvcv_id.code','ilike',self)]" />
-               <!--   <field name="tvcv_id" string="Con của thư viện cv" filter_domain="[('tvcv_id','child_of',self)]" /> 
-               <field name="tvcv_id" string="Con của TVCV parent way" filter_domain="[('tvcv_id.parent_id','=',self)]" />   
-               <field name="loai_cvi" />-->
+               <field name="tvcv_id" string="Search Theo mã thư viện hoặc tên thư viện" filter_domain="['|','|',('tvcv_id.name','ilike',self),('tvcv_id.name_khong_dau','ilike',self),('tvcv_id.code','ilike',self)]" />
+               <field name="noi_dung" string="Search Theo nội dung (không dấu hoặc có dấu)" filter_domain="['|',('noi_dung','ilike',self),('noi_dung_khong_dau','ilike',self)]" />
                <field name="ngay_bat_dau" />
-               <!-- <filter name="CVI Chia điểm cha" domain="[('cd_children_ids','!=',False)]" /> -->
                <filter name="this month" string="CV Tháng này" domain="[('ngay_bat_dau','&lt;',(context_today()+relativedelta(months=1)).strftime('%Y-%m-01')), ('ngay_bat_dau','&gt;=',time.strftime('%Y-%m-01'))]" help="Chọn tháng này" />
                <filter name="last month" string="CV Tháng Trước" domain="[('ngay_bat_dau','&gt;=',(context_today()+relativedelta(months=-1)).strftime('%Y-%m-01')), ('ngay_bat_dau','&lt;',time.strftime('%Y-%m-01'))]" help="Chọn tháng này" />
                <group expand="0" string="Group By">
@@ -44,11 +41,10 @@
                         <field name="id" attrs="{'invisible':[('loai_record','=','Comment')]}"  />
                         <field name="name"  />
                        <field name="loai_record" attrs="{'invisible':[('tvcv_id','!=',False)],'required':True}" invisible="context.get('default_loai_record')" /> 
-                       <!--   <field name="loai_record"/>-->
                         <field name="loai_record_show" attrs="{'invisible':[('tvcv_id','=',False)]}" invisible="context.get('default_loai_record')" />
-                        <field name="user_id" attrs="{'readonly':[('is_admin','=', False),('cam_sua','=', True)],'invisible':[('loai_record','!=','Công Việc')]}" />
-                        <field name="department_id" />
-                        <!-- attrs="{'invisible':[('loai_record','!=','Công Việc')]}"  -->
+                        <field name="user_id" readonly="1"  attrs="{'invisible':[('loai_record','!=','Công Việc')]}" /> <!-- 'readonly':[('is_admin','=', False),('cam_sua','=', True)], -->
+                        <field name="department_id" /><!--  attrs="{'readonly':[('is_admin','=', False)]}"   -->
+                        <field name="department_ids" />
                         <field name="cd_parent_id" readonly="1" attrs="{'invisible':[('cd_parent_id','=',False)]}" />
                         <field name="gd_parent_id" readonly="1" attrs="{'invisible':[('gd_parent_id','=',False)]}" />
                         <field name="hd_parent_id" readonly="1" attrs="{'invisible':[('hd_parent_id','=',False)]}" />
@@ -58,8 +54,6 @@
                      <group>
                         <field name="ngay_bat_dau" invisible="1" />
                         <field name="duration" invisible="context.get('giao_ca_context')" />
-                        <!--                         domain = "[('loai_record','=',loai_record)]"
-                         -->
                         <field name="tvcv_id" attrs="{'readonly':['|',('loai_record','=',False),'|','&amp;',('cam_sua','=',True),('is_sep','=',False),'&amp;',('id','&gt;',0),'|',('gd_parent_id','!=',False),('cd_parent_id','!=',False)],
                         'required':[('loai_record','!=','Comment')]}
                         
@@ -123,6 +117,7 @@
                               <field name="is_sep" invisible="1" />
                              <!--  <field name="user_id" attrs="{'readonly':[('cam_sua','=',True)],'required':True}" context="{'cd_user_id':parent.get('cd_user_id')}" domain="['|','|',('department_id','=',parent.department_id),('department_id','child_of',parent.department_id),('department_id','parent_of',parent.department_id)]" /> -->
                              <field name="user_id" attrs="{'readonly':[('cam_sua','=',True)],'required':True}"  domain="['|','|',('department_id','=',parent.department_id),('department_id','child_of',parent.department_id),('department_id','parent_of',parent.department_id)]" />
+                             <field name="department_id"></field>
                               <field name="gio_bat_dau" invisible="1" />
                               <field name="gio_ket_thuc" invisible="1" />
                               <field name="slncl" invisible="1" />
@@ -158,6 +153,7 @@
                               <field name="is_sep" invisible="1" />
                            <!--   <field name="user_id" attrs="{'readonly':[('cam_sua','=',True)]}" context="{'cd_user_id':parent.get('cd_user_id')}" domain="['|','|',('department_id','=',parent.department_id),                               ('department_id','child_of',parent.department_id),('department_id','parent_of',parent.department_id)]" /> --> 
                               <field name="user_id" attrs="{'readonly':[('cam_sua','=',True)]}"  domain="['|','|',('department_id','=',parent.department_id),                               ('department_id','child_of',parent.department_id),('department_id','parent_of',parent.department_id)]" />
+                              <field name="department_id"></field>
                               <field name="gio_bat_dau" invisible="1" />
                               <field name="gio_ket_thuc" invisible="1" />
                               <field name="slncl" invisible="1" />
@@ -264,6 +260,7 @@
                <field name="duration" />
                <field name="tvcv_id" string="Thư viện Công Việc" />
                <field name="noi_dung" />
+               <field name="noi_dung_khong_dau" />
                <field name="comments_show" />
                <field name="department_id" />
                <field name="loai_cvi" />

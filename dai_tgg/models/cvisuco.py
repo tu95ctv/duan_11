@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api,exceptions,tools,_
 from odoo.addons.dai_tgg.mytools import convert_odoo_datetime_to_vn_str,name_compute_char_join_rieng,name_compute,convert_odoo_datetime_to_vn_datetime
-
+from unidecode import unidecode
 
 class CviSuCo(models.Model):
     _name = 'cvisuco'
     _auto = False
     name = fields.Char(compute='name_',store=True)
-    noi_dung = fields.Text(string=u'Nội dung') 
+    noi_dung = fields.Text(string=u'Nội dung')
+    noi_dung_khong_dau = fields.Text(string=u'Nội dung không dấu', compute='noi_dung_khong_dau_',)  
     
     #moi them
     cvi_id = fields.Many2one('cvi')
@@ -15,18 +16,17 @@ class CviSuCo(models.Model):
     # end moi them
     file_ids = fields.Many2many('dai_tgg.file','cvi_file_relate','cvi_id','file_id',string=u'Files đính kèm')
     doitac_ids = fields.Many2many('res.partner',string=u'Đối Tác')
-    department_id = fields.Many2one('hr.department',string=u'Đơn vị tạo',compute='department_id_',store=True)
-    department_ids = fields.Many2many('hr.department',string=u'Đơn vị liên quan',default=lambda self:[self.env.user.department_id.id],required=True)
-#     department_id = fields.Many2one('hr.department',string=u'Phòng ban tạo',compute='department_id_',store=True)
-#     department_ids = fields.Many2Many('hr.department',string=u'Phòng ban liên quan',default=lambda self:[self.env.user.department_id.id])
+#     department_id = fields.Many2one('hr.department',string=u'Đơn vị tạo',compute='department_id_',store=True)
+    
+    department_id = fields.Many2one('hr.department',string=u'Đơn vị tạo',required=True)
+    department_ids = fields.Many2many('hr.department', string=u'Đơn vị liên quan' )
     loai_record = fields.Selection([(u'Công Việc',u'Công Việc'),(u'Sự Cố',u'Sự Cố'),(u'Sự Vụ',u'Sự Vụ'),(u'Comment',u'Comment')], string = u'Loại Record')
     loai_record_show =  fields.Selection([(u'Công Việc',u'Công Việc'),(u'Sự Cố',u'Sự Cố'),(u'Sự Vụ',u'Sự Vụ'),(u'Comment',u'Comment')], string = u'Loại Record',compute='loai_record_show_')
     ngay_bat_dau =  fields.Date(compute='ngay_bat_dau_',store=True,string=u'Ngày')
     gio_bat_dau = fields.Datetime(string=u'Giờ bắt đầu ', default=fields.Datetime.now)
     gio_ket_thuc = fields.Datetime(string=u'Giờ Kết Thúc')
     duration = fields.Float(digits=(6, 1), help='Duration in Hours',compute = '_get_duration', store = True,string=u'Thời lượng (giờ)')
-    user_id = fields.Many2one('res.users',default =  lambda self: self.env.uid, string=u'Nhân viên tạo')   
-#     noi_dung_trich_dan = fields.Char(compute='noi_dung_trich_dan_',store=True)
+    user_id = fields.Many2one('res.users',default =  lambda self: self.env.uid, readonly=True, string=u'Nhân viên tạo')   
     ctr_ids  = fields.Many2many('ctr','ctr_cvi_relate','cvi_id','ctr_id',string=u'Ca Trực')
     ctr_show = fields.Char(compute='ctr_show_',string=u'Số ca trực')
     tvcv_id = fields.Many2one('tvcv', string=u'Thư Viện Công việc/ Loại Sự Cố/ Loại Sự Vụ',ondelete='restrict')
@@ -41,7 +41,11 @@ class CviSuCo(models.Model):
     
                 
                 
-                
+    @api.depends('noi_dung')
+    def noi_dung_khong_dau_(self):
+        for r in self:
+            if r.noi_dung:
+                r.noi_dung_khong_dau = unidecode(r.noi_dung)
     @api.depends('loai_record')
     def loai_record_show_(self):
         for r in self:

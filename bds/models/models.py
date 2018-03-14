@@ -347,8 +347,7 @@ class GetPhonePoster(models.Model):
     exclude_poster_ids = fields.Many2many('bds.poster')#,inverse="exclude_poster_inverse_")
 #     len_posters_of_sms = fields.Integer()
     phuong_loc_ids = fields.Many2many('bds.phuong')
-
-    quan_ids = fields.Many2many('bds.quan',default = lambda self:self.default_quan())
+    quan_ids = fields.Many2many('bds.quan')#,default = lambda self:self.default_quan())
     phone_list = fields.Text(compute='phone_list_',store=True)
     poster_ids = fields.Many2many('bds.poster','getphone_poster_relate','getphone_id','poster_id')#,compute='poster_ids_',store=True)
     loc_gian_tiep_quan_bds_topic = fields.Selection([(u'Qua Thống Kê Quận Object',u'Qua Thống Kê Quận Object'),(u'Qua BDS Object',u'Qua BDS Object'),(u'Qua BDS SQL',u'Qua BDS SQL')],default = u'Qua BDS SQL')
@@ -364,9 +363,9 @@ class GetPhonePoster(models.Model):
     def name_(self):
         for r in self:
                 r.name = u'get phone,id %s- nhà mạng %s' %(r.id,r.nha_mang)
-    def default_quan(self):
-        quan_10 = self.env['bds.quan'].search([('name','=',u'Quận 10')])
-        return [quan_10.id]
+#     def default_quan(self):
+#         quan_10 = self.env['bds.quan'].search([('name','=',u'Quận 10')])
+#         return [quan_10.id]
     
  
     @api.depends('poster_ids')
@@ -828,9 +827,9 @@ class Fetch(models.Model):
 
     
 
-    def fetch_cron(self,id_fetch):
-        fetch_id2 = self.browse(id_fetch)
-        fetch(fetch_id2,note=u'cập nhật lúc ' +  fields.Datetime.now(),is_fetch_in_cron = True)
+#     def fetch_cron(self,id_fetch):
+#         fetch_id2 = self.browse(id_fetch)
+#         fetch(fetch_id2,note=u'cập nhật lúc ' +  fields.Datetime.now(),is_fetch_in_cron = True)
     
 #     @api.depends('write_date')
 #     def bds_ids_quantity_(self):
@@ -874,6 +873,7 @@ class CronFetch(models.Model):
 #             id_fetch = self.env['bds.fetch'].browse([('id','=',cronfetch_id.id_fetch)])
             fetch_id = cronfetch_id.fetch_id
             if fetch_id:
+                print ("dang fetch")
                 fetch(fetch_id,  note=u'cập nhật lúc ' +  fields.Datetime.now(),is_fetch_in_cron = True)
             else:
                 raise ValueError('khong ton tai: fetch_id')

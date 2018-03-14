@@ -10,7 +10,8 @@ from copy import deepcopy
 import logging
 _logger = logging.getLogger(__name__)
 from odoo.osv import expression
-
+import sys
+VERSION_INFO   = sys.version_info[0]
 def get_or_create_object_has_x2m (self, class_name, search_dict,
                                 write_dict ={},is_must_update=False, noti_dict=None,
                                 inactive_include_search = False, x2m_key=[]):
@@ -95,7 +96,12 @@ EMPTY_CHAR = [u'',u' ',u'\xa0']
 
 
 def empty_string_to_False(readed_xl_value):
-    if  isinstance(readed_xl_value,unicode) or isinstance(readed_xl_value,str) :
+    if VERSION_INFO==2:
+        check_str = isinstance(readed_xl_value,unicode) or isinstance(readed_xl_value,str)
+    else:
+        check_str =  isinstance(readed_xl_value,str)
+    
+    if check_str :
         if readed_xl_value  in EMPTY_CHAR:
             return False
         rs = re.search('\S',readed_xl_value)
@@ -151,10 +157,10 @@ def loop_through_fields_to_add_col_index_match_xl_title(MODEL_DICT, value_may_be
         if field_attr.get('xl_title') ==None and field_attr.get('col_index') !=None:
             continue# cos col_index
         elif field_attr.get('xl_title'):
-            if isinstance(field_attr['xl_title'],unicode) or  isinstance(field_attr['xl_title'],str):
-                xl_title_s = [field_attr['xl_title']]
-            else:
+            if isinstance(field_attr['xl_title'], list):
                 xl_title_s =  field_attr['xl_title']
+            else:
+                xl_title_s = [field_attr['xl_title']]
             for xl_title in xl_title_s:
                 if xl_title == value_may_be_title:
                     field_attr['col_index'] = col
@@ -164,22 +170,16 @@ def loop_through_fields_to_add_col_index_match_xl_title(MODEL_DICT, value_may_be
             is_map_xl_title_foreinkey = loop_through_fields_to_add_col_index_match_xl_title(field_attr, value_may_be_title, row, col)
     return is_map_xl_title or is_map_xl_title_foreinkey
 
-
-def create_instace (self, MODEL_DICT, sheet, row, merge_tuple_list, needdata, noti_dict, main_call_create_instace = None):
+def create_instance (self, MODEL_DICT, sheet, row, merge_tuple_list, needdata, noti_dict, main_call_create_instance = None):
     key_search_dict = {}
     update_dict = {}
     value_fields_of_instance_dicts = {}
     model_name = MODEL_DICT['model']
-    
-    if main_call_create_instace == model_name:
+    if main_call_create_instance == model_name:
         needdata['value_fields_of_instance_dicts'] = value_fields_of_instance_dicts
     xl_val = None
     required_valid = True
     field_type_of_this_model = MODEL_DICT.get('field_type')
-   
-        
-    
-    
     for count, field_field_attr in enumerate(MODEL_DICT['fields']):
         field_name = field_field_attr[0]
         field_attr = field_field_attr[1]
@@ -192,29 +192,15 @@ def create_instace (self, MODEL_DICT, sheet, row, merge_tuple_list, needdata, no
             xl_val = field_attr.get('set_val')
         elif not field_attr.get('fields') and col_index =='skip_field_if_not_found_column_in_some_sheet':
             xl_val = False
-#             continue #field nay khong effect toi search va update neu khong tim thay
         elif not field_attr.get('fields') and col_index !=None:
             xl_val = read_excel_cho_field(sheet, row, col_index, merge_tuple_list)
             if xl_val   != False and field_type_of_this_model != None and '2many' in field_type_of_this_model and field_attr.get('x2m_list'):
                 xl_val = xl_val.split(',')
                 xl_val = map(lambda i: i.strip(),xl_val)
         elif field_attr.get('fields'):#and field_attr.get('field_type')=='many2one':
-            xl_val, value_fields_of_instance_dicts_childrend, required_valid_childrend  = create_instace (self, field_attr, sheet, row, merge_tuple_list, needdata, noti_dict)
+            xl_val, value_fields_of_instance_dicts_childrend, required_valid_childrend  = create_instance (self, field_attr, sheet, row, merge_tuple_list, needdata, noti_dict)
             a_field_val_dict = value_fields_of_instance_dicts.setdefault(field_name,{})
             a_field_val_dict['fields'] = value_fields_of_instance_dicts_childrend
-        
-#             pass
-#             unicode_m2m_list = val.split(',')
-#             unicode_m2m_list = map(lambda i: i.strip(),unicode_m2m_list)
-#             unicode_m2m_list = filter(check_variable_is_not_empty_string, unicode_m2m_list)
-#             def create_or_get_one_in_m2m_value(val):
-#                 val = val.strip()
-#                 if val:
-#                     return get_or_create_object_sosanh(self,field_attr['model'], {key_name:val},noti_dict=noti_dict,model_effect_noti_dict='tvcv')
-#             object_m2m_list = map(create_or_get_one_in_m2m_value, unicode_m2m_list)
-#             m2m_ids = map(lambda x:x.id, object_m2m_list)
-#             val = [(6, False, m2m_ids)]
-            
         elif func:
             pass
         else:
@@ -239,10 +225,8 @@ def create_instace (self, MODEL_DICT, sheet, row, merge_tuple_list, needdata, no
                 update_dict [field_name] = xl_val
        
     inactive_include_search = MODEL_DICT.get('inactive_include_search',False)
-    #print '**key_search_dict',key_search_dict
-    #print '**update_dict',update_dict
     obj_id = get_or_create_object_has_x2m(self, model_name, key_search_dict, update_dict,
-                                is_must_update=True,noti_dict=noti_dict,
+                                is_must_update=True, noti_dict = noti_dict,
                                 inactive_include_search  = inactive_include_search, x2m_key = x2m_key)
     return obj_id,value_fields_of_instance_dicts, required_valid
 def convert_integer(val,needdata):
@@ -261,20 +245,18 @@ def chon_location_id(val,needdata):
 def importthuvien(odoo_or_self_of_wizard):
     self = odoo_or_self_of_wizard
     for r in self:
-           
-#             if r.type_choose =='stock.inventory.line':
             recordlist = base64.decodestring(r.file)
             xl_workbook = xlrd.open_workbook(file_contents = recordlist)
-            loop_dict = {
+            LOOK_DICT = {
                 u'stock.inventory.line': {
                 'title_rows':[4,5],
                 'begin_data_row_offset_with_title_row' :3,
                 'sheet_names':[u'IP (VN2, VNP)'],
                 'model':'stock.inventory.line',
                 'fields' : [
-                    
+
 ('inventory_id', {'func': lambda val,needdata:get_or_create_object_sosanh(self,'stock.inventory', {'name':needdata['sheet_name']}, {}).id,'key':False}),
-('location_id_goc', {'func':lambda val,needdata: self.env['stock.location'].search([('name','=','LTK Dự Phòng')]).id,'key':False, 'for_excel_readonly' :True}),                       
+('location_id_goc', {'func':lambda val, needdata: self.env['stock.location'].search([('name','=','LTK Dự Phòng')]).id,'key':False, 'for_excel_readonly' :True}),                       
 ('location_id1',{'model':'stock.location', 'for_excel_readonly':True,
                                        'fields':[
                                                 ('name',{'func':None,'xl_title':u'Phòng', 'key':True,'required': True}),
@@ -296,20 +278,25 @@ def importthuvien(odoo_or_self_of_wizard):
 
 ('location_id', {'func':chon_location_id, 'key':False}),
 
+
+('prod_lot_id_excel_readonly',{'func':lambda val,needdata: int(val) if isinstance(val,float) else val,'xl_title':u'Seri Number','for_excel_readonly' :True}),
+('pn',{'xl_title':u'Part Number','for_excel_readonly' :True}),
 ('product_id',{'key':True,'required':True,
                'fields':[
                         ('name',{'func':None,'xl_title':u'TÊN VẬT TƯ','key':True,'required':True}),
+                        ('type',{'set_val':'product'}),
+                        ('tracking',{'func':lambda val,needdata: 'serial' if needdata['value_fields_of_instance_dicts']['prod_lot_id_excel_readonly']['val'] !=False else 'none' }),
+                       
                         ]
                }),  
 ('prod_lot_id', {'key':True,
                   'fields':[
-                    ('name',{'func':lambda val,needdata: int(val) if isinstance(val,float) else val,'xl_title':u'Seri Number','key':True,'required':True}),
+                    ('name',{'func':lambda val,needdata: needdata['value_fields_of_instance_dicts']['prod_lot_id_excel_readonly']['val'],'key':True,'required':True}),
                     ('product_id',{'func':lambda v,n:n['value_fields_of_instance_dicts']['product_id']['val'] }),
+                    ('pn',{'func':lambda v,n:n['value_fields_of_instance_dicts']['pn']['val'] }),
                       ]
                   }),
-     
-
- 
+('product_qty', {'func':lambda val, n: 1 if  (n['value_fields_of_instance_dicts']['prod_lot_id']['val'] and val > 1) else val ,'xl_title':u'Tồn kho cuối kỳ','key':False }),
                          ]
                 },#End stock.inventory.line'
                          
@@ -344,11 +331,7 @@ def importthuvien(odoo_or_self_of_wizard):
                                                 ('name',{'xl_title':u'Các công việc con',  'key':True, 'required':True, 'x2m_list':True, 'col_index':'skip_field_if_not_found_column_in_some_sheet'}),
                                                 ]
                                        }),  
-                         
                          ('active',{'func':lambda val, needdata: False if val ==u'na' else True,'xl_title':u'active','key':False,'col_index':'skip_field_if_not_found_column_in_some_sheet','use_fnc_even_cell_is_False':True}),
-                   
-                      
-                      
                       ]
                 },#End stock.inventory.line'
                                   
@@ -386,16 +369,10 @@ def importthuvien(odoo_or_self_of_wizard):
                       ]
                 },#End stock.inventory.line'
                          
-                }#end tag loop_dict
-                
-                
-                
+                }#end tag LOOK_DICT
                 
             noti_dict = {}
-            
-                
-            choose_dict = loop_dict[r.type_choose]
-#             choose_dict = choose_dict
+            choose_dict = LOOK_DICT[r.type_choose]
             recursive_read_field_attr(self,choose_dict)
             for loop_instance in choose_dict.get('loop_list',['main']):
                 for sheet_name in choose_dict['sheet_names']:
@@ -407,18 +384,18 @@ def importthuvien(odoo_or_self_of_wizard):
                     row_title_index =None
                     for row in choose_dict['title_rows']:
                         for col in range(0,sheet.ncols):
-                            value_may_be_title = unicode(sheet.cell_value(row,col))
+                            if VERSION_INFO ==2:
+                                value_may_be_title = unicode(sheet.cell_value(row,col))
+                            else:
+                                value_may_be_title = str(sheet.cell_value(row,col))
+                            
                             is_map_xl_title = loop_through_fields_to_add_col_index_match_xl_title( MODEL_DICT, value_may_be_title, row, col)
                             if is_map_xl_title:
                                 row_title_index = row
                     merge_tuple_list =  sheet.merged_cells
                     for c,row in enumerate(range(row_title_index + choose_dict.get('begin_data_row_offset_with_title_row',1), sheet.nrows)):
                         #print 'row',row
-                        obj_id, value_fields_of_instance_dicts,required = create_instace( self, MODEL_DICT, sheet, row, merge_tuple_list, needdata, noti_dict,main_call_create_instace=choose_dict['model'])
-           
-            r.create_number = noti_dict.get('create')
-            r.update_number = noti_dict.get('update')
-            r.skipupdate_number = noti_dict.get('skipupdate')
+                        obj_id, value_fields_of_instance_dicts, required = create_instance( self, MODEL_DICT, sheet, row, merge_tuple_list, needdata, noti_dict, main_call_create_instance=choose_dict['model'])
             r.log= noti_dict
             
 

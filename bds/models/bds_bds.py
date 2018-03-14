@@ -10,6 +10,7 @@ except:
 
 class bds(models.Model):
     _name = 'bds.bds'
+    
     name = fields.Char(compute = 'name_',store = True)
     title = fields.Char()
     images_ids = fields.One2many('bds.images','bds_id')
@@ -38,6 +39,31 @@ class bds(models.Model):
     area = fields.Float(digits=(32,1))
     address=fields.Char()
     quan_id = fields.Many2one('bds.quan',ondelete='restrict')
+    quan_tam = fields.Datetime(string=u'Quan Tâm')
+    hem_truoc_nha = fields.Float(digit=(6,2))
+    comment = fields.Float(digit=(6,2))
+    ket_cau = fields.Selection([(u'Đất Trống',u'Đất Trống'),(u'Cấp 4',u'Cấp 4'),(u'1 Tầng',u'1 Tầng'),(u'2 Tầng',u'2 Tầng'),(u'3 Tầng',u'3 Tầng'),(u'4 Tầng',u'4 Tầng'),(u'5 Tầng',u'5 Tầng'),(u'lon hon 5 ',u'lon hon 5')])
+#     quan_id_selection = fields.Selection([])
+
+    quan_id_selection = fields.Selection('get_quan_')
+    @api.multi
+    def open_something(self):
+        return {
+                'name': 'abc',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_model': 'bds.bds',
+                'view_id': self.env.ref('bds.bds_form').id,
+                'type': 'ir.actions.act_window',
+                'res_id': self.id,
+#                 'context': context,
+                'target': 'new'
+            }
+        
+    def get_quan_(self):
+        oQuans = self.env['bds.quan'].search([])
+        rs = map(lambda i:(i.name,i.name),oQuans)
+        return rs
     phuong_id = fields.Many2one('bds.phuong')
     link = fields.Char()
     cho_tot_link_fake = fields.Char(compute='cho_tot_link_fake_')
@@ -66,8 +92,11 @@ class bds(models.Model):
     @api.depends('don_gia','quan_id')
     def ti_le_don_gia_(self):
         for r in self:
-            if r.don_gia and r.quan_id.muc_gia_quan:
-                r.ti_le_don_gia = r.don_gia/r.quan_id.muc_gia_quan
+            try:
+                if r.don_gia and r.quan_id.muc_gia_quan:
+                    r.ti_le_don_gia = r.don_gia/r.quan_id.muc_gia_quan
+            except:
+                pass
                 
     @api.depends('gia','area')
     def don_gia_(self):

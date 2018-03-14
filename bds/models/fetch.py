@@ -37,34 +37,40 @@ headers = { 'User-Agent' : 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit
 
 def request_html(url):
     headers = { 'User-Agent' : 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36' }
-    print ( '**VERSION_INFO**',VERSION_INFO,'url',url)
-    if VERSION_INFO == 3:
-        req = url_lib.Request(url, None, headers)
-        rp= url_lib.urlopen(req)
-        mybytes = rp.read()
-        html = mybytes.decode("utf8")
-    elif VERSION_INFO ==2:
-        req = url_lib.Request(url, None, headers)
-        html = url_lib.urlopen(req).read()
-    return html
+    while 1:
+        print ('get html',url)
+        try:
+            if VERSION_INFO == 3:
+                req = url_lib.Request(url, None, headers)
+                rp= url_lib.urlopen(req)
+                mybytes = rp.read()
+                html = mybytes.decode("utf8")
+            elif VERSION_INFO ==2:
+                req = url_lib.Request(url, None, headers)
+                html = url_lib.urlopen(req).read()
+            return html
+        except Exception as e:
+            print ('loi khi get html',e)
+            sleep(5)
+        
+    
 
 
 def fetch(self,note=False,is_fetch_in_cron = False):
     url_ids = self.url_ids.ids
-    #print 'url_ids',url_ids
-#     return 'url_ids',url_ids
-#     _logger.warning('self.url_ids %s'%self.url_ids)
-#     _logger.info('self.url_ids %s'%self.url_ids)
-#     return True
-#     url_ids_id_lists = url_ids.mapped('id')
     if not self.last_fetched_url_id:
         new_index = 0
     else:
-        index_of_last_fetched_url_id = url_ids.index(self.last_fetched_url_id)
-        new_index =  index_of_last_fetched_url_id+1
+        try:
+            index_of_last_fetched_url_id = url_ids.index(self.last_fetched_url_id)
+            new_index =  index_of_last_fetched_url_id+1
+        except:
+            new_index = 0
         if new_index > len(url_ids)-1:
             new_index = 0
+    
     url_id = self.url_ids[new_index]
+    
     url_id_site_leech_name = url_id.siteleech_id.name
     set_number_of_page_once_fetch = self.set_number_of_page_once_fetch
     

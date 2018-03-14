@@ -1,4 +1,4 @@
- # -*- coding: utf-8 -*-
+dayofweek # -*- coding: utf-8 -*-
 import re
 import xlrd
 import time

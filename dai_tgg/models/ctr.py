@@ -2,24 +2,21 @@
 from odoo import models, fields, api,exceptions,tools,_
 from odoo.addons.dai_tgg.mytools import  convert_memebers_to_str,convert_utc_to_gmt_7,name_compute,convert_odoo_datetime_to_vn_datetime,convert_odoo_datetime_to_vn_str,name_compute_char_join_rieng,convert_vn_datetime_to_utc_datetime,Convert_date_orm_to_str
 import datetime
+from unidecode import unidecode
 class CTR(models.Model):
     _name = 'ctr'
     name = fields.Char(compute = '_name_truc_ca_compute', store=True)
+    name_khong_dau = fields.Char(compute = '_name_truc_ca_compute', store=True)
     ca = fields.Selection([(u'Sáng',u'Sáng'), (u'Chiều',u'Chiều'), (u'Đêm',u'Đêm')],string=u'Buổi ca',default = lambda self: self.buoi_ca_now_default_())
-#     date = fields.Date(string=u'Ngày',compute='date_',store=True)#readonly = True
     date = fields.Date(string=u'Ngày',default= convert_utc_to_gmt_7(datetime.datetime.now()).date() )#readonly = True
     gio_bat_dau_ca = fields.Datetime(u'Giờ bắt đầu ca ',default=lambda self: self.gio_bat_dau_defaut_or_ket_thuc_())
     gio_ket_thuc_ca = fields.Datetime(u'Giờ Kết Thúc ca',default=lambda self: self.gio_bat_dau_defaut_or_ket_thuc_(is_tinh_gio_bat_dau_or_ket_thuc = 'gio_ket_thuc'))#
-    department_id = fields.Many2one('hr.department',string=u'Đơn vị',default=lambda self:self.env.user.department_id, readonly=True,required=True)
+    department_id = fields.Many2one('hr.department',string=u'Đơn vị',default=lambda self:self.env.user.department_id, readonly=True, required=True)
     member_ids = fields.Many2many('res.users', string=u'Những thành viên trực',default =  lambda self : [self.env.user.id],required=True)
     cvi_ids = fields.Many2many('cvi','ctr_cvi_relate','ctr_id','cvi_id',string=u'Công Việc/Sự Cố/Sự Vụ')
-#     su_co_ids = fields.Many2many('suco','ctr_suco_rel','ctr_id','suco_id',string=u'Sự Cố')
-#     su_vu_ids = fields.Many2many('suvu','ctr_suvu_rel','ctr_id','suvu_id',string=u'Sự Vụ')
-#     ctr_lines_ids = fields.One2many('ctrlines','ctr_id')
     cvi_show =  fields.Char(compute='cvi_show_',string=u'Công Việc/Sự Cố/ Sự Vụ')
     giao_ca_ids = fields.One2many('cvi','giao_ca_id',string=u'Giao Ca Sau')
     giao_ca_truoc_ids = fields.Many2many('cvi', compute='nhan_ca_ids_',string=u'Ca Trước Giao')
-    #cvi_loc   = fields.Selection([(u'Công Việc',u'Công Việc'),(u'Sự Cố',u'Sự Cố'),(u'Sự Vụ',u'Sự Vụ')], string = u'Lọc loại record',)
     @api.depends('name','department_id')
     def nhan_ca_ids_(self):
         for r in self:
@@ -70,6 +67,8 @@ class CTR(models.Model):
         for r in self:
             ret =  r.get_names()
             r.name = ret
+            if ret:
+                r.name_khong_dau = unidecode(ret)
     
 #     @api.depends('gio_bat_dau_ca')
 #     def date_(self):

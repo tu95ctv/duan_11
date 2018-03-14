@@ -5,7 +5,7 @@ from odoo.addons.dai_tgg.mytools import  name_compute,name_khong_dau_compute
 class PartnerABC(models.Model):
     _inherit = ['res.partner']#,'khongdaumodel']
     _auto = True
-    department_id = fields.Many2one('hr.department')
+    
     job_id = fields.Many2one('hr.job', string='Job Title')
     name_khong_dau = fields.Char(compute='name_khong_dau_', store=True)
     name_viet_tat =  fields.Char(compute='name_khong_dau_', store=True)
@@ -26,6 +26,7 @@ class PartnerABC(models.Model):
 
 class User(models.Model):
     _inherit = 'res.users'
+    department_id = fields.Many2one('hr.department')
     ctr_ids = fields.Many2many('ctr', 'ctr_res_users_rel_d4','res_users_id','ctr_id',string=u'Các ca đã trực')
     cac_sep_ids = fields.Many2many('res.users','user_sep_relate','user_id','sep_id', string=u'Các Lãnh Đạo')
     cac_linh_ids = fields.Many2many('res.users','user_sep_relate','sep_id', 'user_id',string=u'Các Nhân Viên')

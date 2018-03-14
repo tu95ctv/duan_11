@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+   <data>
+      <report string="In Biên Bản Bàn Giao" id="action_report_picking_dai_hcm" model="stock.picking" report_type="qweb-pdf" name="tonkho.report_picking_dai_hcm" file="stock.report_picking_operations_dai_hcm" />
+    
+    <template id="thead">
+         <thead>
+            <tr>
+            	<th  style="width:50px;">
+                  <strong>STT</strong>
+               </th>
+               
+               <th>
+                  <strong>Tên Vật Tư</strong>
+               </th>
+               <th class="text-right">
+                  <!-- class="text-right" -->
+                  <strong>Số Lượng</strong>
+               </th>
+               
+               <th  style="width:50px;">
+                  <!-- class="text-right" -->
+                  <strong>ĐVT</strong>
+               </th>
+               
+               
+                <th t-if="has_serial_number">
+                  <strong>Part Number</strong>
+               </th>
+               
+               <th t-if="has_serial_number">
+                  <strong>Serial Number</strong>
+               </th>
+
+               <td>
+               <strong>Ghi Chú</strong>
+            </td>
+            
+            </tr>
+         </thead>
+      </template>
+      
+      
+     <template id="pack_operation_row">
+         <tr>
+         	<td>
+               <span t-esc="stt" />
+            </td>
+            <td>
+               <span t-field="pack_operation.product_id" />
+            </td>
+            <td class="text-right">
+               <!-- class="text-right" -->
+               <span t-esc="product_qty"  />
+             <!--  <span t-field="pack_operation.product_uom_id" groups="product.group_uom" /> --> 
+            </td>
+             <td>
+             <span t-field="pack_operation.product_uom_id"/>
+             </td>
+            <td t-if="has_serial_number">
+                  <t t-esc="pn" />
+               </td>
+            <td t-if="has_serial_number">
+               <t t-esc="sn" />
+            </td>
+            <td>
+               <t t-esc="ghi_chu" />
+            </td>
+         </tr>
+      </template>
+      <template id="tonkho.report_picking_dai_hcm">
+         <t t-call="report.html_container">
+            <t t-foreach="docs" t-as="o">
+               <!--      <t t-call="report.external_layout"> -->
+               <div class="page" style="font-family: Times New Roman;font-size:14px">
+                  <!-- style="font-family: Times New Roman" -->
+                  <t t-call="tonkho.bien_ban_description" />
+                  <t t-if="o.pack_operation_ids">
+                     <table class="table table-bordered">
+                        <!-- table-condensed -->
+                        <t t-set="has_barcode" t-value="any([pack_operation.product_id and pack_operation.product_id.sudo().barcode or pack_operation.package_id for pack_operation in o.pack_operation_ids])" />
+                        <t t-set="has_serial_number" t-value="o.pack_operation_ids.filtered('pack_lot_ids')" groups="stock.group_production_lot" />
+                        <t t-call="tonkho.thead" />
+                        <tbody>
+                           <t t-set="pack_operation_ids" t-value="o.pack_operation_ids" />
+                           <t groups="base.group_portal" t-set="pack_operation_ids" t-value="o.pack_operation_ids.sudo()" />
+                           <t t-set="stt" t-value="0"/>
+                           <t t-foreach="pack_operation_ids" t-as="pack_operation">
+                              <t t-if="pack_operation.pack_lot_ids">
+                                 <t t-foreach="pack_operation.pack_lot_ids" t-as="pack_lot_id">
+                           			<t t-set="stt" t-value="stt + 1"></t>
+                                    <t t-call="tonkho.pack_operation_row">
+                                    	<t t-set="pn" t-value="pack_lot_id.lot_id.pn" />
+                                       <t t-set="sn" t-value="pack_lot_id.lot_id.name" />
+                                       <t t-set="product_qty" t-value="1" />
+                                       <t t-set="ghi_chu" t-value="pack_lot_id.ghi_chu" />
+                                    </t>
+                                 </t>
+                              </t>
+                              <t t-if="not pack_operation.pack_lot_ids">
+                                 <t t-call="tonkho.pack_operation_row">
+                                 	<t t-set="stt" t-value="stt + 1"></t>
+                                    <t t-set="pn" t-value="NO" />
+                                    <t t-set="sn" t-value="NO" />
+                                    <t t-set="product_qty" t-value="pack_operation.get_qty_done_for_report()" />
+                                 </t>
+                              </t>
+                           </t>
+                        </tbody>
+                     </table>
+                     <p></p>
+                      <p>Lý do: <span t-field="o.ly_do"></span></p>
+                     <p>Biên bản này được thành <span t-field="o.so_ban_in"></span> Bản. Bên nhận giữ <span t-field="o.ben_nhan_giu"></span>  Bản, bên giao nhận <span t-field="o.ben_giao_giu"></span> bản</p>
+                     <t t-call="tonkho.ky_ten"></t>
+                  </t>
+               </div>
+            </t>
+         </t>
+       
+      </template>
+      <template id="ky_ten">
+         <div class="row" style="margin-top:50px;">
+            <div class="col-xs-4">
+               <p class="text-center">
+                  <strong> ĐẠI DIỆN BÊN GIAO</strong> 
+               </p>
+               <p class="text-center">(Ký, họ tên)</p>
+            </div>
+            
+            <div class="col-xs-4">
+            </div>
+            
+            <div class="col-xs-4">
+               <p class="text-center"><strong>ĐẠI DIỆN BÊN NHẬN</strong></p>
+               <p class="text-center">(Ký, họ tên)</p>
+            </div>
+         </div>
+      </template>
+      <template id="bien_ban_description">
+         <div class="row" style="">
+            <div class="col-xs-6" style="text-align: center;">
+               <p>TRUNG TÂM HẠ TẦNG MẠNG MIỀN NAM</p>
+               <p style="margin-top:-5px;">
+                  <b>ĐÀI VIỄN THÔNG HCM</b>
+               </p>
+            </div>
+            <div class="col-xs-6" style="text-align: center">
+               <p>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+               <p style="margin:-10px">Độc Lập - Tự Do - Hạnh Phúc</p>
+            </div>
+         </div>
+         <h2 style="text-align: center;font-weight:bold; margin:50px 0px 50px 0px;">BIÊN BẢN <span t-esc="o.ban_giao_or_nghiem_thu_show().upper()"></span> VẬT TƯ</h2>
+         <p />
+         <p>Căn cứ vào tờ trình số: <span t-field="o.totrinh_id.so_to_trinh"></span> ,Ngày: <span t-field="o.totrinh_id.ngay_to_trinh"></span>, V/v: <span t-field="o.totrinh_id.name"></span></p>
+         <p />
+         <!--   <p>Hôm nay ngày .........tháng .........năm.........., tại..........</p> -->
+         <p>
+            Hôm nay ngày:
+            <b t-field="o.min_date" t-field-options="{&quot;format&quot;: &quot;dd/MM/YYYY&quot;}" />
+         </p>
+         <p>Chúng tôi gồm:</p>
+         <p style="text-decoration: underline"><strong>Đại diện bên giao</strong></p>
+         <t t-call="tonkho.ben_giao_nhan_info">
+              <t t-set="member_ids" t-value="o.source_member_ids" />
+         </t>
+         <t t-if="o.dest_member_ids">
+         	<p></p>
+         	<p></p>
+            <p style="text-decoration: underline"><strong>Đại diện bên nhận</strong></p>
+            <t t-call="tonkho.ben_giao_nhan_info">
+               <t t-set="member_ids" t-value="o.dest_member_ids" />
+            </t>
+         </t>
+         <p></p>
+         <p></p>
+         <p>Chúng tôi đã tiến hành <span t-esc="o.ban_giao_or_nghiem_thu_show().lower()"></span> các vật tư bên dưới</p>
+      </template>
+      
+      <template id="ben_giao_nhan_info">
+         <div class="row">
+            <t t-foreach="member_ids" t-as="member">
+               <div class="row">
+                  <div class="col-xs-10">
+                     <div class="col-xs-4" style="padding-left:40px;">
+                        Ông bà:
+                        <span t-field="member.name" />
+                     </div>
+                     <div class="col-xs-4" style="padding-left:40px;">
+                        Chức Vụ:
+                        <span t-field="member.job_id" />
+                     </div>
+                     <div class="col-xs-4" style="padding-left:40px;">
+                        Đơn Vị:
+                        <span t-field="member.department_id.get_department_name_for_report" />
+                     </div>
+                  </div>
+               </div>
+            </t>
+         </div>
+      </template>
+      
+   </data>
+</odoo>

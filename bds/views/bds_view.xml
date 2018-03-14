@@ -172,11 +172,16 @@
                     <field name="name" />
                     <field name="title" />
                     <field name="gia" />
+                     <field name="gia"  string="be hon gia" filter_domain="[('gia','&lt;',self)]"/>
                     <field name="link" />
                     <field name="ngay_dang" />
                     <field name="html" />
                     <field name="siteleech_id" />
                     <field name="quan_id" />
+                    <field name="poster_id" />
+                    <field name= "muc_gia" />
+                    <field name="muc_ti_le_don_gia" />
+                    <field name="quan_id_selection" filter_domain="[('quan_id','=',self)]"/>
                     <separator />
                     <filter name="less than 4 post" string="less than 4 post " domain="[('count_post_all_site','&lt;=',4)]" />
                     <filter name="2-3 tỷ" string="2-3 tỷ" domain="[('gia','&lt;=', 3), ('gia','&gt;=', 2)]" />
@@ -187,6 +192,8 @@
                     <filter name="3-10 tỷ" string="1-10 tỷ quận TPhu,TB,11, less 3 " domain="['|','|',('quan_id','ilike', 'Tân phú'),('quan_id','ilike', 'Tân Bình'),('quan_id','ilike', 'Quận 11'),('count_post_all_site','&lt;=',3),('gia','&lt;=', 6), ('gia','&gt;=', 2),('ngay_dang','&lt;', ((context_today()+datetime.timedelta(days=1)).strftime('%Y-%m-%d')))]" />
                     <filter name=" &lt; 5 tỷ" string=" &lt; 5 tỷ" domain="[('gia','&lt;=', 5)]" />
                     <filter name="&gt;2tỷ" string="&gt;2tỷ" domain="[('gia','&gt;=', 2)]" />
+                    <filter name="Moifetchcachday30phut" string="Mới fetch về cách 30 phút" domain="[('create_date','&gt;=', ((context_today() -datetime.timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S') )]" help="Pickings that are late on scheduled time" />
+                    <filter name="threeday" string="Ba ngày gần đây" domain="[('ngay_dang','&lt;=', (context_today().strftime('%Y-%m-%d'))), ('ngay_dang','&gt;=', ((context_today()-datetime.timedelta(days=3)).strftime('%Y-%m-%d')))]" help="Pickings that are late on scheduled time" />
                     <filter name="thisweek" string="This Week" domain="[('ngay_dang','&lt;=', (context_today().strftime('%Y-%m-%d'))), ('ngay_dang','&gt;=', ((context_today()-datetime.timedelta(days=7)).strftime('%Y-%m-%d')))]" help="Pickings that are late on scheduled time" />
                     <filter name="thismonth" string="This Month" domain="[('ngay_dang','&lt;',(context_today()+relativedelta(months=1)).strftime('%Y-%m-01')), ('ngay_dang','&gt;=',time.strftime('%Y-%m-01'))]" help="Pickings that are late on scheduled time" />
                     <filter name="thisyear" string="This Year" domain="[('ngay_dang','&lt;',(context_today()+relativedelta(years=1)).strftime('%Y-%m-01')), ('ngay_dang','&gt;=',time.strftime('%Y-%m-01'))]" help="Pickings that are late on scheduled time" />
@@ -201,13 +208,13 @@
             <field name="model">bds.bds</field>
             <field name="arch" type="xml">
                 <form>
-                   
                         <group>
                             <group>
                             	 <field name="present_image_link" />
                                  <field name="present_image_link_show" widget="image" width="310" />
                                 <!-- <field name="name" /> -->
                                 <field name="title" />
+                                <field name="quan_tam"></field>
                                 <field name="link" />
                                 <field name="gia" />
                                 <field name="muc_gia" />
@@ -248,10 +255,13 @@
             <field name="name">bds list</field>
             <field name="model">bds.bds</field>
             <field name="arch" type="xml">
-                <tree default_order="ngay_dang DESC">
+                <tree default_order="ngay_dang DESC" editable="bottom" decoration-info="quan_tam!=False">
+                    <button name="open_something" type="object"/>
+                
                     <field name="title" />
-                    <!--  <field name="present_image_link"  /> -->
                     <field name="thumb" widget="image" height="100" />
+                    <field name="quan_tam"></field>
+                    
                     <!--<field name="thumb_view"  />
              <field name="present_image_link_show" widget="image" height="50" />   -->
                     <field name="gia" />
@@ -263,17 +273,24 @@
                      <field name="ti_le_don_gia" />
                      <field name="muc_ti_le_don_gia" />
                     <field name="address" />
-                    <field name="html_show" />
+                    <field name="poster_id" />
+                    <field name="html" />
+                    <field name="hem_truoc_nha" />
+                    <field name="ket_cau" />
+                     <field name="comment" />
+                    
                     <field name="ngay_dang" />
+                    <field name="count_chotot_post_of_poster" />
+                    <field name="count_bds_post_of_poster" />
+                    <field name="count_post_all_site" />
+                    <field name="cho_tot_link_fake" />
+                    <field name="link" />
                     <field name="write_date" />
                     <field name="create_date" />
                     <field name="quan_id" />
                     <field name="phuong_id" />
                     <field name="siteleech_id" />
-                    <field name="poster_id" />
-                    <field name="count_chotot_post_of_poster" />
-                    <field name="count_bds_post_of_poster" />
-                    <field name="count_post_all_site" />
+                    
                 </tree>
             </field>
         </record>
@@ -427,7 +444,7 @@
                         <group>
                             <field name="name" />
                             <field name="is_repost_for_poster" />
-                        <!--   <field name="filter_sms_or_filter_sql" /> -->  
+                          	<field name="filter_sms_or_filter_sql" /> 
                             <field name="sms_id" />
                             <field name="nha_mang" />
                             <field name="post_count_min" />
@@ -701,10 +718,13 @@
         </record>
         
         <!-- end cronfetch -->
+        
         <menuitem name="BDS" id="bds_icon" web_icon="bds,static/src/image/bds.png" />
     <!--     <menuitem name="dien thoai" id="dienthoai_menu" parent="bds_icon" action="dienthoai_action" sequence="1" />
          --><menuitem name="BDS" id="bds_menu" parent="bds_icon" action="bds.action_window" />
         <menuitem name="Poster" id="poster_menu" parent="bds_icon" action="bds.poster_action" />
+        <menuitem name="Schedule" id="schedule_menu" parent="bds_icon" action="base.ir_cron_act" />
+        
         <menuitem name="Fetch" id="fetch_menu" parent="bds_icon" action="bds.fetch_action" />
         <menuitem name="Get Poster" id="getphoneposter__menu" parent="bds_icon" action="bds.getphoneposter_action" />
         <menuitem name="images_menu" id="images_menu" parent="bds_icon" action="bds.images_action" />
