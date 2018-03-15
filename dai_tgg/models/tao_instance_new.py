@@ -256,6 +256,16 @@ def importthuvien(odoo_or_self_of_wizard):
                 'fields' : [
 
 ('inventory_id', {'func': lambda val,needdata:get_or_create_object_sosanh(self,'stock.inventory', {'name':needdata['sheet_name']}, {}).id,'key':False}),
+('prod_lot_id_excel_readonly',{'func':lambda val,needdata: int(val) if isinstance(val,float) else val,'xl_title':u'Seri Number','for_excel_readonly' :True}),
+('product_id',{'key':True,'required':True,
+               'fields':[
+                        ('name',{'func':None,'xl_title':u'TÊN VẬT TƯ','key':True,'required':True}),
+                        ('type',{'set_val':'product'}),
+                        ('tracking',{'func':lambda val,needdata: 'serial' if needdata['value_fields_of_instance_dicts']['prod_lot_id_excel_readonly']['val'] !=False else 'none' }),
+                       
+                        ]
+               }),  
+
 ('location_id_goc', {'func':lambda val, needdata: self.env['stock.location'].search([('name','=','LTK Dự Phòng')]).id,'key':False, 'for_excel_readonly' :True}),                       
 ('location_id1',{'model':'stock.location', 'for_excel_readonly':True,
                                        'fields':[
@@ -281,14 +291,7 @@ def importthuvien(odoo_or_self_of_wizard):
 
 ('prod_lot_id_excel_readonly',{'func':lambda val,needdata: int(val) if isinstance(val,float) else val,'xl_title':u'Seri Number','for_excel_readonly' :True}),
 ('pn',{'xl_title':u'Part Number','for_excel_readonly' :True}),
-('product_id',{'key':True,'required':True,
-               'fields':[
-                        ('name',{'func':None,'xl_title':u'TÊN VẬT TƯ','key':True,'required':True}),
-                        ('type',{'set_val':'product'}),
-                        ('tracking',{'func':lambda val,needdata: 'serial' if needdata['value_fields_of_instance_dicts']['prod_lot_id_excel_readonly']['val'] !=False else 'none' }),
-                       
-                        ]
-               }),  
+
 ('prod_lot_id', {'key':True,
                   'fields':[
                     ('name',{'func':lambda val,needdata: needdata['value_fields_of_instance_dicts']['prod_lot_id_excel_readonly']['val'],'key':True,'required':True}),
