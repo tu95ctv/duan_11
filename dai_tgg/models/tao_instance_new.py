@@ -251,7 +251,7 @@ def importthuvien(odoo_or_self_of_wizard):
                 u'stock.inventory.line': {
                 'title_rows':[4,5],
                 'begin_data_row_offset_with_title_row' :3,
-                'sheet_names':[u'IP (VN2, VNP)'],
+                'sheet_names':[u'Truyền dẫn'],#[u'IP (VN2, VNP)'],
                 'model':'stock.inventory.line',
                 'fields' : [
 
@@ -262,6 +262,17 @@ def importthuvien(odoo_or_self_of_wizard):
                         ('name',{'func':None,'xl_title':u'TÊN VẬT TƯ','key':True,'required':True}),
                         ('type',{'set_val':'product'}),
                         ('tracking',{'func':lambda val,needdata: 'serial' if needdata['value_fields_of_instance_dicts']['prod_lot_id_excel_readonly']['val'] !=False else 'none' }),
+                        ('uom_id',  {'fields': [ ('name',{'set_val':u'Cái','key':True,'required':True}),
+                                                          ('category_id', {'fields': [('name',{'set_val':u'Unit','key':True,'required':True})
+                                                                                               ]
+                                                                                  }
+                                                           ),
+
+                                                
+                                                       ]
+                                            }
+                         ),
+
                        
                         ]
                }),  
@@ -270,19 +281,22 @@ def importthuvien(odoo_or_self_of_wizard):
 ('location_id1',{'model':'stock.location', 'for_excel_readonly':True,
                                        'fields':[
                                                 ('name',{'func':None,'xl_title':u'Phòng', 'key':True,'required': True}),
-                                                ('location_id',{'func':lambda val,needdata: needdata['value_fields_of_instance_dicts']['location_id_goc']['val'], 'key':True})
+                                                ('location_id',{'func':lambda val,needdata: needdata['value_fields_of_instance_dicts']['location_id_goc']['val'], 'key':True}),
+                                                ('department_id',{'key':True,'model':'hr.department', 'fields':[('name',{'key':True,'set_val':'LTK'})]})
                                                 ]
                                        }), 
 ('location_id2',{'model':'stock.location', 'for_excel_readonly':True,
                                        'fields':[
                                                 ('name',{'func':None,'xl_title':u'Tủ/Kệ', 'key':True,'required': True}),
-                                                ('location_id',{'func':lambda val,needdata: needdata['value_fields_of_instance_dicts']['location_id1']['val'], 'key':True})
+                                                ('location_id',{'func':lambda val,needdata: needdata['value_fields_of_instance_dicts']['location_id1']['val'] or  needdata['value_fields_of_instance_dicts']['location_id_goc']['val']  , 'key':True}),
+                                                ('department_id',{'key':True,'model':'hr.department', 'fields':[('name',{'key':True,'set_val':'LTK'})]})
                                                 ]
                                        }),                                           
 ('location_id3',{'model':'stock.location', 'for_excel_readonly':True,
                                        'fields':[
                                                 ('name',{'func':None,'xl_title':u'Ngăn', 'key':True,'required': True}),
-                                                ('location_id',{'func':lambda val,needdata: needdata['value_fields_of_instance_dicts']['location_id2']['val'], 'key':True})
+                                                ('location_id',{'func':lambda val,needdata: needdata['value_fields_of_instance_dicts']['location_id2']['val'] or needdata['value_fields_of_instance_dicts']['location_id1']['val'] or  needdata['value_fields_of_instance_dicts']['location_id_goc']['val'], 'key':True}),
+                                                ('department_id',{'key':True,'model':'hr.department', 'fields':[('name',{'key':True,'set_val':'LTK'})]})
                                                 ]
                                        }),                                          
 
@@ -397,7 +411,7 @@ def importthuvien(odoo_or_self_of_wizard):
                                 row_title_index = row
                     merge_tuple_list =  sheet.merged_cells
                     for c,row in enumerate(range(row_title_index + choose_dict.get('begin_data_row_offset_with_title_row',1), sheet.nrows)):
-                        #print 'row',row
+                        print ('row',row)
                         obj_id, value_fields_of_instance_dicts, required = create_instance( self, MODEL_DICT, sheet, row, merge_tuple_list, needdata, noti_dict, main_call_create_instance=choose_dict['model'])
             r.log= noti_dict
             

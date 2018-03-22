@@ -52,6 +52,15 @@
             <field name="description">Chợ tốt Quận 1</field>
             <field name="url">https://gateway.chotot.com/v1/public/ad-listing?region=13&amp;area=96&amp;cg=1020&amp;limit=20&amp;o=0&amp;st=s,k</field>
         </record>
-	 
+	 	
+	 		<record model="bds.url" id="url_chotot_quan_bt">
+            <field name="description">Chợ tốt bình thạnh</field>
+            <field name="url">https://gateway.chotot.com/v1/public/ad-listing?region=13&amp;area=109&amp;cg=1020&amp;limit=20&amp;o=0&amp;st=s,k</field>
+        </record>
+        
+        <record model="bds.url" id="url_chotot_quan_11">
+            <field name="description">Chợ tốt Quận 11</field>
+            <field name="url">https://gateway.chotot.com/v1/public/ad-listing?region=13&amp;area=106&amp;cg=1020&amp;limit=20&amp;o=0&amp;st=s,k</field>
+        </record>
 	 </data>
 </odoo>

@@ -4,7 +4,7 @@
       
     <record id="bds_fetch_1" model="ir.cron">
             <field name="name">bds fetch 1</field>
-            <field name="active">False</field> 
+            <field name="active">True</field> 
             <field name="user_id" ref="base.user_root"/>
             <field name="interval_number">1</field>
             <field name="interval_type">minutes</field>

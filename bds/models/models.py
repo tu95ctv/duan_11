@@ -43,6 +43,7 @@ class URL(models.Model):
     quan_id = fields.Many2one('bds.quan',ondelete='restrict')
     phuong_id = fields.Many2one('bds.phuong')
     current_page = fields.Integer()
+    current_page_for_first = fields.Integer()
     post_ids = fields.Many2many('bds.bds','url_post_relate','url_id','post_id')
     
     phuong_ids =  fields.Many2many('bds.phuong',compute='phuong_ids_',store=True)
@@ -71,9 +72,10 @@ class URL(models.Model):
             
     @api.depends('url','quan_id','phuong_id')
     def name_(self):
-        surfix =  self.phuong_id.name or  self.quan_id.name  
-        url = self.url
-        self.name = (url if url else '') + ((' ' +  surfix ) if surfix else '')
+        for r in self:
+            surfix =  r.phuong_id.name or  r.quan_id.name  
+            url = r.url
+            r.name = (url if url else '') + ((' ' +  surfix ) if surfix else '')
     @api.multi
     def name_get(self):
         res = []
@@ -670,15 +672,12 @@ class Cron(models.Model):
             self.env.cr.close()
 def name_compute(r,adict=None,join_char = u' - '):
     names = []
-#     adict = [('cate_cvi',{'pr':''}),('noi_dung',{'pr':'','fnc':lambda r: r.name}),('id',{'pr':''})]
     for fname,attr_dict in adict:
-#         #print r , fname
         val = getattr(r,fname)
         fnc = attr_dict.get('fnc',None)
         if fnc:
             val = fnc(val)
         if  not val:# Cho có trường hợp New ID
-#         if val ==False:
             if attr_dict.get('skip_if_False',True):
                 continue
             if  fname=='id' :
@@ -733,6 +732,8 @@ class Fetch(models.Model):
     url_ids = fields.Many2many('bds.url')
     last_fetched_url_id = fields.Integer()#>0
     web_last_page_number = fields.Integer()
+    max_page = fields.Integer()
+    is_for_first = fields.Selection([('1','1'),('2','2')])
 #     page_begin = fields.Integer()
 #     set_page_end = fields.Integer()
     set_number_of_page_once_fetch = fields.Integer(default=5)
@@ -862,23 +863,34 @@ class Fetch(models.Model):
                                                                             "fetch_object":fetch_object
                                                                             })
             w2.start()
-            
 class CronFetch(models.Model):
     _name = 'cronfetch'
-#     id_fetch = fields.Integer()
-    fetch_id = fields.Many2one('bds.fetch',required=True)
+    fetch_ids = fields.Many2many('bds.fetch',required=True)
+    fetch_current_id = fields.Many2one('bds.fetch')
     def fetch_cron(self):
         cronfetch_id =  self.search([],limit=1,order='id desc')
         if cronfetch_id:
-#             id_fetch = self.env['bds.fetch'].browse([('id','=',cronfetch_id.id_fetch)])
-            fetch_id = cronfetch_id.fetch_id
-            if fetch_id:
-                print ("dang fetch")
+            fetch_ids = cronfetch_id.fetch_ids
+            if fetch_ids:
+                if cronfetch_id.fetch_current_id:
+                    try:
+                        index_of_last_fetched_url_id = fetch_ids.ids.index( cronfetch_id.fetch_current_id.id)
+                        new_index =  index_of_last_fetched_url_id+1
+                    except ValueError:
+                        new_index = 0
+                else:
+                    new_index =0
+                if new_index > len(fetch_ids)-1:
+                    new_index = 0    
+                print 'new_index',new_index
+                fetch_id = fetch_ids[new_index]
                 fetch(fetch_id,  note=u'cập nhật lúc ' +  fields.Datetime.now(),is_fetch_in_cron = True)
+                cronfetch_id.fetch_current_id = fetch_id.id
             else:
-                raise ValueError('khong ton tai: fetch_id')
+                raise ValueError('khong ton tai: fetch_ids')
         else:
             raise ValueError('khong ton tai cronfetch nao ca ')
+        
         
 class Mycontact(models.Model):
     _name = 'bds.mycontact'

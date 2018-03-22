@@ -50,6 +50,7 @@ def request_html(url):
                 html = url_lib.urlopen(req).read()
             return html
         except Exception as e:
+            print 'str(e)',str(e)
             print ('loi khi get html',e)
             sleep(5)
         
@@ -64,7 +65,7 @@ def fetch(self,note=False,is_fetch_in_cron = False):
         try:
             index_of_last_fetched_url_id = url_ids.index(self.last_fetched_url_id)
             new_index =  index_of_last_fetched_url_id+1
-        except:
+        except ValueError:
             new_index = 0
         if new_index > len(url_ids)-1:
             new_index = 0
@@ -73,8 +74,8 @@ def fetch(self,note=False,is_fetch_in_cron = False):
     
     url_id_site_leech_name = url_id.siteleech_id.name
     set_number_of_page_once_fetch = self.set_number_of_page_once_fetch
-    
-    end_page_number_in_once_fetch,page_lists, begin, so_page =  get_page_number_lists(self,url_id,url_id_site_leech_name,set_number_of_page_once_fetch,is_fetch_in_cron) 
+    max_page = self.max_page
+    end_page_number_in_once_fetch,page_lists, begin, so_page =  get_page_number_lists(self,url_id,url_id_site_leech_name,set_number_of_page_once_fetch,max_page,is_fetch_in_cron) 
     number_notice_dict = {
     'page_int':0,
     'curent_link':u'0/0',
@@ -95,7 +96,11 @@ def fetch(self,note=False,is_fetch_in_cron = False):
     self.update_link_number =number_notice_dict["update_link_number"]
     self.link_number = number_notice_dict["link_number"]
     self.existing_link_number = number_notice_dict["existing_link_number"]
-    url_id.write({'current_page':end_page_number_in_once_fetch,'web_last_page_number':self.web_last_page_number})
+    if self.is_for_first=='2':
+        current_page_or_current_page_for_first = 'current_page_for_first'
+    else:
+        current_page_or_current_page_for_first = 'current_page'
+    url_id.write({current_page_or_current_page_for_first:end_page_number_in_once_fetch,'web_last_page_number':self.web_last_page_number})
 #     if url_id.siteleech_id.name ==  'batdongsan':
 #         phuong_list = get_quan_list_in_big_page(self)
 #         quan_list = get_quan_list_in_big_page(self,column_name='bds_bds.quan_id')
@@ -107,7 +112,7 @@ def fetch(self,note=False,is_fetch_in_cron = False):
 #         self.write({'quan_ids':[(6,0,quan_list)]})#'quan_ids':[(6,0,quan_list)]
     self.note = note
     return None
-def get_page_number_lists(self,url_id,url_id_site_leech_name,set_number_of_page_once_fetch,is_fetch_in_cron):
+def get_page_number_lists(self,url_id,url_id_site_leech_name,set_number_of_page_once_fetch,max_page,is_fetch_in_cron):
     if url_id_site_leech_name ==  'batdongsan':
         last_page_from_website =  get_last_page_from_bdsvn_website(url_id.url)
         self.web_last_page_number = last_page_from_website
@@ -131,7 +136,16 @@ def get_page_number_lists(self,url_id,url_id_site_leech_name,set_number_of_page_
 #     else:
 #         end_page = set_page_end if set_page_end <= last_page_from_website else last_page_from_website
     end_page = last_page_from_website
-    begin = url_id.current_page + 1
+#     max_page = url_id.max_page
+    if self.is_for_first=='2':
+        current_page_or_current_page_for_first = 'current_page_for_first'
+    else:
+        current_page_or_current_page_for_first = 'current_page'
+        
+    current_page = getattr(url_id, current_page_or_current_page_for_first)
+    if  max_page and max_page < end_page:
+        end_page = max_page
+    begin = current_page + 1
     if begin > end_page:
         begin  = 1
     end = begin   + set_number_of_page_once_fetch - 1

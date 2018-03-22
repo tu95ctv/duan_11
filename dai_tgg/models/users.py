@@ -5,15 +5,15 @@ from odoo.addons.dai_tgg.mytools import  name_compute,name_khong_dau_compute
 class PartnerABC(models.Model):
     _inherit = ['res.partner']#,'khongdaumodel']
     _auto = True
-    
+    department_id = fields.Many2one('hr.department')
     job_id = fields.Many2one('hr.job', string='Job Title')
     name_khong_dau = fields.Char(compute='name_khong_dau_', store=True)
     name_viet_tat =  fields.Char(compute='name_khong_dau_', store=True)
+    
     @api.depends('name')
     def name_khong_dau_(self):
         pass
         name_khong_dau_compute(self)
-        
     @api.model
     def name_search(self, name, args=None, operator='ilike', limit=100):
         args = args or []
@@ -23,16 +23,16 @@ class PartnerABC(models.Model):
         obj = self.search(domain + args, limit=limit)
         return obj.name_get()
     
-
+    
+    
 class User(models.Model):
     _inherit = 'res.users'
-    department_id = fields.Many2one('hr.department')
+#     department_id = fields.Many2one('hr.department')
     ctr_ids = fields.Many2many('ctr', 'ctr_res_users_rel_d4','res_users_id','ctr_id',string=u'Các ca đã trực')
     cac_sep_ids = fields.Many2many('res.users','user_sep_relate','user_id','sep_id', string=u'Các Lãnh Đạo')
     cac_linh_ids = fields.Many2many('res.users','user_sep_relate','sep_id', 'user_id',string=u'Các Nhân Viên')
     is_admin = fields.Boolean(compute='is_admin_')
     all_sep_ids = fields.Many2many('res.users','user_sep_relate','user_id','sep_id', string=u'Tất cả Lãnh Đạo',compute='all_sep_ids')
-#     department_id = fields.Many2one('hr.department')
     @api.model
     def name_search(self, name, args=None, operator='ilike', limit=100):
         args = args or []

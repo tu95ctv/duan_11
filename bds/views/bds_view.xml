@@ -59,6 +59,7 @@
                                 <field name="quan_id" />
                                 <field name="phuong_id" />
                                 <field name="current_page" />
+                                <field name="current_page_for_first" />
                             </group>
                         </group>
                         <group>
@@ -84,6 +85,7 @@
                     <field name="quan_id" />
                     <field name="phuong_id" />
                     <field name="current_page" />
+                    <field name="current_page_for_first" />
                 </tree>
             </field>
         </record>
@@ -123,6 +125,8 @@
                             <field name="last_fetched_url_id" />
                             <field name="name" />
                             <field name="update_field_of_existing_recorder" />
+                            <field name="max_page" />
+                            <field name="is_for_first" />
                             <field name="web_last_page_number" />
                       <!--     <field name="page_begin" /> -->  
                         <!--     <field name="set_page_end" /> -->
@@ -172,7 +176,10 @@
                     <field name="name" />
                     <field name="title" />
                     <field name="gia" />
-                     <field name="gia"  string="be hon gia" filter_domain="[('gia','&lt;',self)]"/>
+                     <field name="gia"  string="giá bé hơn" filter_domain="[('gia','&lt;',self)]"/>
+                     <field name="gia"  string="giá  lớn hơn" filter_domain="[('gia','&gt;',self)]"/>
+                      <field name="count_post_all_site"  string="count_post_all_site  bé hơn" filter_domain="[('count_post_all_site','&lt;',self)]"/>
+                                          
                     <field name="link" />
                     <field name="ngay_dang" />
                     <field name="html" />
@@ -180,8 +187,10 @@
                     <field name="quan_id" />
                     <field name="poster_id" />
                     <field name= "muc_gia" />
+                    <field name= "muc_don_gia" />
                     <field name="muc_ti_le_don_gia" />
                     <field name="quan_id_selection" filter_domain="[('quan_id','=',self)]"/>
+                    <filter name="ngay_dang" string="Ngày đăng bé hơn" domain="[('ngay_dang','&lt;=', self)]" help="Pickings that are late on scheduled time" />
                     <separator />
                     <filter name="less than 4 post" string="less than 4 post " domain="[('count_post_all_site','&lt;=',4)]" />
                     <filter name="2-3 tỷ" string="2-3 tỷ" domain="[('gia','&lt;=', 3), ('gia','&gt;=', 2)]" />
@@ -193,12 +202,15 @@
                     <filter name=" &lt; 5 tỷ" string=" &lt; 5 tỷ" domain="[('gia','&lt;=', 5)]" />
                     <filter name="&gt;2tỷ" string="&gt;2tỷ" domain="[('gia','&gt;=', 2)]" />
                     <filter name="Moifetchcachday30phut" string="Mới fetch về cách 30 phút" domain="[('create_date','&gt;=', ((context_today() -datetime.timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S') )]" help="Pickings that are late on scheduled time" />
+                    <filter name="threeday" string="1 ngày gần đây" domain="[('ngay_dang','&lt;=', (context_today().strftime('%Y-%m-%d'))), ('ngay_dang','&gt;=', ((context_today()-datetime.timedelta(days=1)).strftime('%Y-%m-%d')))]" help="Pickings that are late on scheduled time" />
                     <filter name="threeday" string="Ba ngày gần đây" domain="[('ngay_dang','&lt;=', (context_today().strftime('%Y-%m-%d'))), ('ngay_dang','&gt;=', ((context_today()-datetime.timedelta(days=3)).strftime('%Y-%m-%d')))]" help="Pickings that are late on scheduled time" />
                     <filter name="thisweek" string="This Week" domain="[('ngay_dang','&lt;=', (context_today().strftime('%Y-%m-%d'))), ('ngay_dang','&gt;=', ((context_today()-datetime.timedelta(days=7)).strftime('%Y-%m-%d')))]" help="Pickings that are late on scheduled time" />
                     <filter name="thismonth" string="This Month" domain="[('ngay_dang','&lt;',(context_today()+relativedelta(months=1)).strftime('%Y-%m-01')), ('ngay_dang','&gt;=',time.strftime('%Y-%m-01'))]" help="Pickings that are late on scheduled time" />
                     <filter name="thisyear" string="This Year" domain="[('ngay_dang','&lt;',(context_today()+relativedelta(years=1)).strftime('%Y-%m-01')), ('ngay_dang','&gt;=',time.strftime('%Y-%m-01'))]" help="Pickings that are late on scheduled time" />
                     <group expand="0" string="Group By">
                         <filter string="groupby quan" domain="[]" context="{'group_by':'quan_id'}" />
+                        <filter string="groupby muc_don_gia" domain="[]" context="{'group_by':'muc_don_gia'}" />
+                        <filter string="groupby ti_le_don_gia" domain="[]" context="{'group_by':'ti_le_don_gia'}" />
                     </group>
                 </search>
             </field>
@@ -230,7 +242,6 @@
                                 <field name="phuong_id" />
                                 <field name="cho_tot_link_fake" />
                                 <field name="siteleech_id" />
-                                
                             </group>
                             <group>
                                 <field name="poster_id" />
@@ -265,18 +276,15 @@
                     <!--<field name="thumb_view"  />
              <field name="present_image_link_show" widget="image" height="50" />   -->
                     <field name="gia" />
-                    <field name="muc_gia" />
+                 
                     <field name="area" />
-                     <field name="muc_dt" />
                      <field name="don_gia" />
-                     <field name="muc_don_gia" />
                      <field name="ti_le_don_gia" />
                      <field name="muc_ti_le_don_gia" />
                     <field name="address" />
                     <field name="poster_id" />
                     <field name="html" />
-                    <field name="hem_truoc_nha" />
-                    <field name="ket_cau" />
+              
                      <field name="comment" />
                     
                     <field name="ngay_dang" />
@@ -285,13 +293,17 @@
                     <field name="count_post_all_site" />
                     <field name="cho_tot_link_fake" />
                     <field name="link" />
-                    <field name="write_date" />
                     <field name="create_date" />
                     <field name="quan_id" />
                     <field name="phuong_id" />
                     <field name="siteleech_id" />
-                    
-                </tree>
+    				<field name="muc_dt" />
+                    <field name="muc_gia" />
+                     <field name="muc_don_gia" />         
+                    <field name="write_date" />
+      <field name="hem_truoc_nha" />
+                    <field name="ket_cau" />
+                                    </tree>
             </field>
         </record>
         <record model="ir.actions.act_window" id="bds.action_window">
@@ -694,7 +706,8 @@
                     <sheet>
                         <group>
                             <field name="id" />
-                     		<field name="fetch_id" />
+                     		<field name="fetch_ids" />
+                     		<field name="fetch_current_id" />
                         </group>
                     </sheet>
                 </form>
@@ -706,7 +719,8 @@
             <field name="arch" type="xml">
                 <tree>
                      <field name="id" />
-                     <field name="fetch_id" />
+                     <field name="fetch_ids" />
+                     <field name="fetch_current_id" />
                 </tree>
             </field>
         </record>
