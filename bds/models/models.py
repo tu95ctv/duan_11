@@ -65,6 +65,8 @@ class URL(models.Model):
                     name = 'chotot'
                 elif 'batdongsan' in r.url:
                     name = 'batdongsan'
+                elif 'muaban' in r.url:
+                    name = 'muaban'
                 else:
                     name = re.search('\.(.*?)\.', r.url).group(1)
                 chottot_site = g_or_c_ss(self,'bds.siteleech', {'name':name})
@@ -882,7 +884,6 @@ class CronFetch(models.Model):
                     new_index =0
                 if new_index > len(fetch_ids)-1:
                     new_index = 0    
-                print 'new_index',new_index
                 fetch_id = fetch_ids[new_index]
                 fetch(fetch_id,  note=u'cập nhật lúc ' +  fields.Datetime.now(),is_fetch_in_cron = True)
                 cronfetch_id.fetch_current_id = fetch_id.id

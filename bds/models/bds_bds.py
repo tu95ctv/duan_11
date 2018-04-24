@@ -19,7 +19,7 @@ class bds(models.Model):
     thumb_view = fields.Binary(compute='thumb_view_')   
     present_image_link = fields.Char()
     present_image_link_show = fields.Binary(compute='present_image_link_show_')
-    muc_gia = fields.Selection([('<1','<1'),('1-2','1-2'),('2-3','2-3'),('3-4','3-4'),('4-5','4-5'),('5-6','5-6'),('6-7','6-7'),('>7','>7')],
+    muc_gia = fields.Selection([('<1','<1'),('1-2','1-2'),('2-3','2-3'),('3-4','3-4'),('4-5','4-5'),('5-6','5-6'),('6-7','6-7'),('7-8','7-8'),('8-9','8-9'),('9-10','9-10'),('10-11','10-11'),('11-12','11-12'),('>12','>12')],
                                compute='muc_gia_',store = True,string=u'Mức Giá')
     muc_dt = fields.Selection(
         [('<10','<10'),('10-20','10-20'),('20-30','20-30'),('30-40','30-40'),('40-50','40-50'),('50-60','50-60'),('60-70','60-70'),('>70','>70')],
@@ -131,18 +131,18 @@ class bds(models.Model):
                     break
             if not selection:
                 r.muc_dt = '>70'
-    @api.depends('gia')
+    @api.depends('gia','is_triger')
     def muc_gia_(self):
-        muc_gia_list = [('<1','<1'),('1-2','1-2'),('2-3','2-3'),('3-4','3-4'),('4-5','4-5'),('5-6','5-6'),('6-7','6-7'),('>7','>7')]
+        muc_gia_list = [('<1','<1'),('1-2','1-2'),('2-3','2-3'),('3-4','3-4'),('4-5','4-5'),('5-6','5-6'),('6-7','6-7'),('7-8','7-8'),('8-9','8-9'),('9-10','9-10'),('10-11','10-11'),('11-12','11-12'),('>12','>12')]
         for r in self:
             selection = None
-            for muc_gia_can_tren in range(1,8):
+            for muc_gia_can_tren in range(1,len(muc_gia_list)):
                 if r.gia < muc_gia_can_tren:
                     selection = muc_gia_list[muc_gia_can_tren-1][0]
                     r.muc_gia = selection
                     break
             if not selection:
-                r.muc_gia = '>7'
+                r.muc_gia = muc_gia_list[-1][0]
     @api.depends('html')
     def html_show_(self):
         for r in self:

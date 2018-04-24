@@ -15,7 +15,7 @@
             <field name="url">https://batdongsan.com.vn/ban-nha-rieng-quan-10/-1/n-4000/-1/-1</field>
         </record>
            <record model="bds.url" id="url_chotot_quan_10">
-            <field name="description">bds.com.vn quận 10 duoi 4 ty</field>
+            <field name="description">Chợ tốt quận 10</field>
             <field name="url">https://gateway.chotot.com/v1/public/ad-listing?region=13&amp;area=105&amp;cg=1020&amp;limit=20&amp;o=0&amp;st=s,k</field>
         </record>
          <record model="bds.url" id="bds_quan_5_duoi_4_ty">
@@ -62,5 +62,11 @@
             <field name="description">Chợ tốt Quận 11</field>
             <field name="url">https://gateway.chotot.com/v1/public/ad-listing?region=13&amp;area=106&amp;cg=1020&amp;limit=20&amp;o=0&amp;st=s,k</field>
         </record>
+        
+        <record model="bds.url" id="url_muaban_quan_10">
+            <field name="description">Mua bán quận 10</field>
+            <field name="url">https://muaban.net/nha-hem-ngo-quan-10-l5907-c3202?cp=5</field>
+        </record>
+        
 	 </data>
 </odoo>

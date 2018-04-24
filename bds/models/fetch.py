@@ -8,8 +8,6 @@ try:
     import urllib.request as url_lib
 except:
     import urllib2 as url_lib
-
-
 from bs4 import BeautifulSoup
 import datetime
 import re
@@ -24,17 +22,8 @@ from odoo import  fields
 import math
 _logger = logging.getLogger(__name__)
 from odoo.osv import expression
-# from email.MIMEMultipart import MIMEMultipart
-# from email.MIMEText import MIMEText
 import smtplib
-
-# def fetch(self,note=False,is_fetch_in_cron = False):
-#     #print '**** fetch ____'
-#     fetch1(self,note,is_fetch_in_cron)
 headers = { 'User-Agent' : 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36' }
-    
-
-
 def request_html(url):
     headers = { 'User-Agent' : 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36' }
     while 1:
@@ -50,7 +39,6 @@ def request_html(url):
                 html = url_lib.urlopen(req).read()
             return html
         except Exception as e:
-            print 'str(e)',str(e)
             print ('loi khi get html',e)
             sleep(5)
         
@@ -75,7 +63,7 @@ def fetch(self,note=False,is_fetch_in_cron = False):
     url_id_site_leech_name = url_id.siteleech_id.name
     set_number_of_page_once_fetch = self.set_number_of_page_once_fetch
     max_page = self.max_page
-    end_page_number_in_once_fetch,page_lists, begin, so_page =  get_page_number_lists(self,url_id,url_id_site_leech_name,set_number_of_page_once_fetch,max_page,is_fetch_in_cron) 
+    end_page_number_in_once_fetch, page_lists, begin, so_page =  get_page_number_lists(self,url_id, url_id_site_leech_name,set_number_of_page_once_fetch,max_page) 
     number_notice_dict = {
     'page_int':0,
     'curent_link':u'0/0',
@@ -112,31 +100,25 @@ def fetch(self,note=False,is_fetch_in_cron = False):
 #         self.write({'quan_ids':[(6,0,quan_list)]})#'quan_ids':[(6,0,quan_list)]
     self.note = note
     return None
-def get_page_number_lists(self,url_id,url_id_site_leech_name,set_number_of_page_once_fetch,max_page,is_fetch_in_cron):
+
+
+def get_page_number_lists(self,url_id,url_id_site_leech_name,set_number_of_page_once_fetch,max_page):
     if url_id_site_leech_name ==  'batdongsan':
         last_page_from_website =  get_last_page_from_bdsvn_website(url_id.url)
         self.web_last_page_number = last_page_from_website
     elif url_id_site_leech_name=='chotot':
-#         last_page_from_website =6000
         page_1_url = create_cho_tot_page_link(url_id.url, 1)
         html = request_html(page_1_url)
         html = json.loads(html)
         total = int(html["total"])
         last_page_from_website = int(math.ceil(total/20.0))
         self.web_last_page_number = last_page_from_website
+    elif url_id_site_leech_name=='muaban':
+        last_page_from_website = 10
+        self.web_last_page_number = last_page_from_website   
     elif url_id_site_leech_name=='lazada':
         last_page_from_website =5
-#     if is_fetch_in_cron:
-#         set_page_end = False
-#     else:
-#         set_page_end  =self.set_page_end
-#         
-#     if not set_page_end:
-#         end_page = last_page_from_website
-#     else:
-#         end_page = set_page_end if set_page_end <= last_page_from_website else last_page_from_website
     end_page = last_page_from_website
-#     max_page = url_id.max_page
     if self.is_for_first=='2':
         current_page_or_current_page_for_first = 'current_page_for_first'
     else:
@@ -176,9 +158,6 @@ def page_handle(self, page_int, url_id, number_notice_dict):
             topic_dict_of_page['list_id'] = title_soups[0]['href']
             icon_soup = title_and_icon.select('img.product-avatar-img')
             topic_dict_of_page['thumb'] = icon_soup[0]['src']
-#         for a in title_soups:
-#             l =a['href']
-#             link = 'https://batdongsan.com.vn' + l
             links_per_page.append(topic_dict_of_page)
     elif siteleech_id.name =='chotot':
         url = create_cho_tot_page_link(url_input,page_int)
@@ -186,32 +165,35 @@ def page_handle(self, page_int, url_id, number_notice_dict):
         html = json.loads(html)
         html = html['ads']
         links_per_page = html
-#         for i in html:
-#             url = 'https://gateway.chotot.com/v1/public/ad-listing/' + str(i['list_id'])
-#             links_per_page.append(url)
+    elif siteleech_id.name =='muaban':
+        print url_input
+        url =  re.sub('\?cp=(\d*)', '?cp=%s'%page_int, url_input)
+        html = request_html(url)
+#         print 'ahaha', html
+        soup = BeautifulSoup(html, 'html.parser')
+        title_and_icons = soup.select('div.mbn-box-list-content')
+        for title_and_icon in title_and_icons:
+            topic_dict_of_page = {}
+            title_soups = title_and_icon.select("a.mbn-image")
+            href = title_soups[0]['href']
+            print href
+            topic_dict_of_page['list_id'] = href
+            links_per_page.append(topic_dict_of_page)
+#             icon_soup = title_and_icon.select('img.product-avatar-img')
+#             topic_dict_of_page['thumb'] = icon_soup[0]['src']
     elif siteleech_id.name =='lazada':
         url = url_input +'?page=' +int(page_int)
     number_notice_dict['curent_page'] = page_int 
     number_notice_dict['length_link_per_previous_page']  = number_notice_dict.get('length_link_per_curent_page',0)
     number_notice_dict['length_link_per_curent_page'] = len(links_per_page)
-    for link in links_per_page:
-        topic_dict_of_page = {}
+    for topic_dict_of_page in links_per_page:
         if  siteleech_id.name =='chotot':
-            topic_dict_of_page = link
-            link  = 'https://gateway.chotot.com/v1/public/ad-listing/' + str(link['list_id'])
+            link  = 'https://gateway.chotot.com/v1/public/ad-listing/' + str(topic_dict_of_page['list_id'])
         elif 'batdongsan' in siteleech_id.name:
-            topic_dict_of_page = link
-            link  = 'https://batdongsan.com.vn' +  link['list_id']
+            link  = 'https://batdongsan.com.vn' +  topic_dict_of_page['list_id']
+        else:
+            link = topic_dict_of_page['list_id']
         deal_a_link(self,link,number_notice_dict,url_id,topic_dict_of_page=topic_dict_of_page)
-#         while (True):
-#             try:
-#                 deal_a_link(self,link,number_notice_dict,url_id,topic_dict_of_page=topic_dict_of_page)
-#                 break
-#             except Exception as e:
-#                 raise ValueError(str(e))
-#                 self.env['bds.error'].create({'code':str(e),'url':link})
-#                 ##print 'url','sleep....because error'
-#                 sleep(5)
 def deal_a_link(self,link,number_notice_dict,url_id,topic_dict_of_page={}):
     
     search_dict = {}
@@ -221,14 +203,21 @@ def deal_a_link(self,link,number_notice_dict,url_id,topic_dict_of_page={}):
     #print '**link**',link
     html = request_html(link)
     siteleech_id = url_id.siteleech_id
-    if siteleech_id.name =='batdongsan':
-        pass
-    elif siteleech_id.name =='chotot':
+#     if siteleech_id.name =='batdongsan':
+#         pass
+    if siteleech_id.name =='chotot':
         html = json.loads(html)
+   
     if siteleech_id.name =='batdongsan':    
         price = get_bds_dict_in_topic(self,update_dict,html,siteleech_id,only_return_price=True)
     elif siteleech_id.name =='chotot':
         price = get_chotot_topic_vals(self,update_dict,html,siteleech_id,only_return_price=True)
+    elif siteleech_id.name =='muaban':
+        price = get_muaban_vals_one_topic(self,update_dict,html,siteleech_id,only_return_price=True)
+        print 'price',price
+    
+#     price-value
+    
     search_link_existing= self.env['bds.bds'].search([('link','=',link)])
     if search_link_existing:
         number_notice_dict["existing_link_number"] = number_notice_dict["existing_link_number"] + 1
@@ -244,10 +233,12 @@ def deal_a_link(self,link,number_notice_dict,url_id,topic_dict_of_page={}):
             if siteleech_id.name =='batdongsan':    
                 get_bds_dict_in_topic(self,update_dict,html,siteleech_id)
                 update_dict['thumb'] = topic_dict_of_page.get('thumb',False)
-                #print "***topic_dict_of_page.get('thumb',False)***",topic_dict_of_page.get('thumb',False)
             elif siteleech_id.name =='chotot':
                 get_chotot_topic_vals(self,update_dict,html,siteleech_id)
                 update_dict['thumb'] = topic_dict_of_page.get('image',False)
+            elif siteleech_id.name =='muaban':
+                get_muaban_vals_one_topic(self,update_dict,html,siteleech_id)
+                  
             update_dict.update({'url_ids':[(4,url_id.id)]})
             search_link_existing.write(update_dict)
             number_notice_dict['update_link_number'] = number_notice_dict['update_link_number'] + 1
@@ -260,12 +251,12 @@ def deal_a_link(self,link,number_notice_dict,url_id,topic_dict_of_page={}):
         elif siteleech_id.name  =='chotot':
             get_chotot_topic_vals(self,update_dict,html,siteleech_id)
             update_dict['thumb'] = topic_dict_of_page.get('image',False)
+        elif siteleech_id.name =='muaban':
+                get_muaban_vals_one_topic(self,update_dict,html,siteleech_id)
         update_dict['link'] = link
         update_dict.update({'url_ids':[(4,url_id.id)]})
-        print ('**update_dict**',update_dict)
         self.env['bds.bds'].create(update_dict)
         number_notice_dict['create_link_number'] = number_notice_dict['create_link_number'] + 1    
-#     update_dict.update({'url_ids':[(4,self.id)]})
     link_number = number_notice_dict.get("link_number",0) + 1
     number_notice_dict["link_number"] = link_number
     number_notice_dict["curent_link"] = u'%s/%s'%(link_number,number_notice_dict['length_link_per_curent_page']*number_notice_dict['so_page'])
@@ -275,6 +266,28 @@ def get_images_for_bds_com_vn(soup):
     rs = soup.select('meta[property="og:image"]')
     images =  list(map(lambda i:i['content'],rs))
     return images
+
+def get_muaban_vals_one_topic(self,update_dict,html,siteleech_id,only_return_price=False):
+    update_dict['data'] = html
+    soup = BeautifulSoup(html, 'html.parser')
+    gia_soup = soup.select('div.price-value span')
+    gia =  gia_soup[0].get_text()
+    gia = re.sub(u'\.|đ|\s', '',gia)
+    print 'gia',gia
+    gia = int(gia)
+    if only_return_price:
+        return gia
+    title = soup.select('div.cl-title > h1')[0].get_text()
+    title = title.strip()
+    print 'title',title
+    update_dict['title']=title
+    
+    mobile,name = get_mobile_name_for_batdongsan(soup, site_name='muaban')
+    user = get_or_create_user_cho_tot_batdongsan(self,mobile,name,siteleech_id.name,site_name='muaban')
+    update_dict['user_name_poster']=name
+    update_dict['phone_poster']=mobile
+    update_dict['poster_id'] = user.id
+    
 def get_bds_dict_in_topic(self,update_dict,html,siteleech_id,only_return_price=False):
     def create_or_get_one_in_m2m_value(val):
             val = val.strip()
@@ -311,7 +324,7 @@ def get_bds_dict_in_topic(self,update_dict,html,siteleech_id,only_return_price=F
     update_dict['quan_id'] = quan_id
     update_dict['phuong_id'] = get_phuong_xa_from_topic(self,soup,quan_id)
     #get_all_phuong_xa_of_quan_from_topic(self,soup,quan_id)
-    title = soup.select('div.pm-title > h1')[0].contents[0]
+    title = soup.select('div.pm-title > h1')[0].contents[0] 
     update_dict['title']=title
     ###print 'title',title
     mobile,name = get_mobile_name_for_batdongsan(soup)
@@ -339,12 +352,25 @@ def g_or_c_chotot_quan(self,quan_name):
 #         name_unidecode  = unidecode(quan).lower().replace(' ','-')
 #         rs = self.env['bds.quan'].create({'name':quan,'name_unidecode':name_unidecode,'name_without_quan':name_without_quan_huyen})
 #     return rs     
-def get_mobile_name_for_batdongsan(soup):
-    mobile = get_mobile_user(soup)
-    try:
-        name = get_name_user(soup)
-    except:
-        name = 'no name bds'
+def get_mobile_name_for_batdongsan(soup,site_name='batdongsan'):
+    if site_name == 'batdongsan':
+        mobile = get_mobile_user(soup)
+        try:
+            name = get_name_user(soup)
+        except:
+            name = 'no name bds'
+    elif site_name=='muaban':
+        mobile_and_name_soup = soup.select('div.ct-contact ')
+        name_soup = mobile_and_name_soup.select('div:nth-child(1) span')
+        name = name_soup.get_text()
+        print 'name',name
+        
+        mobile_soup = mobile_and_name_soup.select('div:nth-child(2) span b')
+        mobile = mobile_soup.get_text()
+        print 'mobile',mobile
+        
+        
+        
     return mobile,name
 def get_or_create_user_cho_tot_batdongsan(self,mobile,name,type_site):
     search_dict = {}
