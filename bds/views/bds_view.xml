@@ -204,8 +204,11 @@
                     <filter name="Moifetchcachday30phut" string="Mới fetch về cách 30 phút" domain="[('create_date','&gt;=', ((context_today() -datetime.timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S') )]" help="Pickings that are late on scheduled time" />
                     <filter name="threeday" string="1 ngày gần đây" domain="[('ngay_dang','&lt;=', (context_today().strftime('%Y-%m-%d'))), ('ngay_dang','&gt;=', ((context_today()-datetime.timedelta(days=1)).strftime('%Y-%m-%d')))]" help="Pickings that are late on scheduled time" />
                     <filter name="threeday" string="Ba ngày gần đây" domain="[('ngay_dang','&lt;=', (context_today().strftime('%Y-%m-%d'))), ('ngay_dang','&gt;=', ((context_today()-datetime.timedelta(days=3)).strftime('%Y-%m-%d')))]" help="Pickings that are late on scheduled time" />
-                    <filter name="thisweek" string="This Week" domain="[('ngay_dang','&lt;=', (context_today().strftime('%Y-%m-%d'))), ('ngay_dang','&gt;=', ((context_today()-datetime.timedelta(days=7)).strftime('%Y-%m-%d')))]" help="Pickings that are late on scheduled time" />
-                    <filter name="thismonth" string="This Month" domain="[('ngay_dang','&lt;',(context_today()+relativedelta(months=1)).strftime('%Y-%m-01')), ('ngay_dang','&gt;=',time.strftime('%Y-%m-01'))]" help="Pickings that are late on scheduled time" />
+                    <filter name="thisweek" string="This Week" domain="[('ngay_dang','&lt;=', (context_today()+ datetime.timedelta(days=1)).strftime('%Y-%m-%d')), ('ngay_dang','&gt;=', ((context_today()-datetime.timedelta(days=7)).strftime('%Y-%m-%d')))]" help="Pickings that are late on scheduled time" />
+                   
+                    <filter name="today" string="ToDay" domain="[('ngay_dang','&lt;=', (context_today()+ datetime.timedelta(days=1)).strftime('%Y-%m-%d')), ('ngay_dang','&gt;=', ((context_today()-datetime.timedelta(days=1)).strftime('%Y-%m-%d')))]" help="Pickings that are late on scheduled time" />
+                    <filter name="quan_tam" string="Quan tâm gần đây" domain="[('quan_tam','&lt;=', (context_today()+ datetime.timedelta(days=1)).strftime('%Y-%m-%d')), ('quan_tam','&gt;=', ((context_today()-datetime.timedelta(days=3)).strftime('%Y-%m-%d')))]" help="Pickings that are late on scheduled time" />
+                    <filter name="thismonth" string="This Month" domain="[('ngay_dang','&lt;',(context_today()+ datetime.timedelta(days=1)).strftime('%Y-%m-%d')), ('ngay_dang','&gt;=',time.strftime('%Y-%m-01'))]" help="Pickings that are late on scheduled time" />
                     <filter name="thisyear" string="This Year" domain="[('ngay_dang','&lt;',(context_today()+relativedelta(years=1)).strftime('%Y-%m-01')), ('ngay_dang','&gt;=',time.strftime('%Y-%m-01'))]" help="Pickings that are late on scheduled time" />
                     <group expand="0" string="Group By">
                         <filter string="groupby quan" domain="[]" context="{'group_by':'quan_id'}" />
@@ -283,10 +286,9 @@
                      <field name="muc_ti_le_don_gia" />
                     <field name="address" />
                     <field name="poster_id" />
+                    <field name="quan_id" />
                     <field name="html" />
-              
                      <field name="comment" />
-                    
                     <field name="ngay_dang" />
                     <field name="count_chotot_post_of_poster" />
                     <field name="count_bds_post_of_poster" />
@@ -294,7 +296,6 @@
                     <field name="cho_tot_link_fake" />
                     <field name="link" />
                     <field name="create_date" />
-                    <field name="quan_id" />
                     <field name="phuong_id" />
                     <field name="siteleech_id" />
     				<field name="muc_dt" />
