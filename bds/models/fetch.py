@@ -26,6 +26,7 @@ import smtplib
 headers = { 'User-Agent' : 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36' }
 def request_html(url):
     headers = { 'User-Agent' : 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36' }
+    count_fail = 0
     while 1:
         print ('get html',url)
         try:
@@ -39,8 +40,13 @@ def request_html(url):
                 html = url_lib.urlopen(req).read()
             return html
         except Exception as e:
+            count_fail +=1
             print ('loi khi get html',e)
             sleep(5)
+            if count_fail ==5:
+                raise ValueError(u'Lỗi get html')
+            
+                
         
     
 
@@ -178,6 +184,12 @@ def page_handle(self, page_int, url_id, number_notice_dict):
             href = title_soups[0]['href']
             print href
             topic_dict_of_page['list_id'] = href
+            area = title_and_icon.select('span.mbn-item-area b')[0].get_text()
+            area = area.split(' ')[0].strip().replace(',','.')
+            print 'area txt',area
+            area = float(area)
+            print 'area',area
+            topic_dict_of_page['area']=area
             links_per_page.append(topic_dict_of_page)
 #             icon_soup = title_and_icon.select('img.product-avatar-img')
 #             topic_dict_of_page['thumb'] = icon_soup[0]['src']
@@ -193,7 +205,10 @@ def page_handle(self, page_int, url_id, number_notice_dict):
             link  = 'https://batdongsan.com.vn' +  topic_dict_of_page['list_id']
         else:
             link = topic_dict_of_page['list_id']
-        deal_a_link(self,link,number_notice_dict,url_id,topic_dict_of_page=topic_dict_of_page)
+        try:
+            deal_a_link(self,link,number_notice_dict,url_id,topic_dict_of_page=topic_dict_of_page)
+        except Exception as e:
+            print '1 topic link bi http eror'
 def deal_a_link(self,link,number_notice_dict,url_id,topic_dict_of_page={}):
     
     search_dict = {}
@@ -202,6 +217,7 @@ def deal_a_link(self,link,number_notice_dict,url_id,topic_dict_of_page={}):
     ##print link
     #print '**link**',link
     html = request_html(link)
+        
     siteleech_id = url_id.siteleech_id
 #     if siteleech_id.name =='batdongsan':
 #         pass
@@ -238,6 +254,7 @@ def deal_a_link(self,link,number_notice_dict,url_id,topic_dict_of_page={}):
                 update_dict['thumb'] = topic_dict_of_page.get('image',False)
             elif siteleech_id.name =='muaban':
                 get_muaban_vals_one_topic(self,update_dict,html,siteleech_id)
+                update_dict['area'] = topic_dict_of_page.get('area',False)
                   
             update_dict.update({'url_ids':[(4,url_id.id)]})
             search_link_existing.write(update_dict)
@@ -253,6 +270,7 @@ def deal_a_link(self,link,number_notice_dict,url_id,topic_dict_of_page={}):
             update_dict['thumb'] = topic_dict_of_page.get('image',False)
         elif siteleech_id.name =='muaban':
                 get_muaban_vals_one_topic(self,update_dict,html,siteleech_id)
+                update_dict['area'] = topic_dict_of_page.get('area',False)
         update_dict['link'] = link
         update_dict.update({'url_ids':[(4,url_id.id)]})
         self.env['bds.bds'].create(update_dict)
@@ -271,22 +289,33 @@ def get_muaban_vals_one_topic(self,update_dict,html,siteleech_id,only_return_pri
     update_dict['data'] = html
     soup = BeautifulSoup(html, 'html.parser')
     gia_soup = soup.select('div.price-value span')
-    gia =  gia_soup[0].get_text()
-    gia = re.sub(u'\.|đ|\s', '',gia)
-    print 'gia',gia
-    gia = int(gia)
+    try:
+        gia =  gia_soup[0].get_text()
+        gia = re.sub(u'\.|đ|\s', '',gia)
+        print 'gia',gia
+        gia = gia/1000000000.0
+    except IndexError:
+        gia = 0
     if only_return_price:
         return gia
+    update_dict['gia'] = gia
     title = soup.select('div.cl-title > h1')[0].get_text()
     title = title.strip()
     print 'title',title
     update_dict['title']=title
+    update_dict['siteleech_id'] = siteleech_id.id
+    quan_soup = soup.select('span.detail-location')
+    quan_txt =  quan_soup[0].get_text()
+    quan_name =  quan_txt.split('-')[0].strip()
+    quan_id = g_or_c_chotot_quan(self,quan_name)
+    update_dict['quan_id'] = quan_id
     
     mobile,name = get_mobile_name_for_batdongsan(soup, site_name='muaban')
-    user = get_or_create_user_cho_tot_batdongsan(self,mobile,name,siteleech_id.name,site_name='muaban')
-    update_dict['user_name_poster']=name
-    update_dict['phone_poster']=mobile
-    update_dict['poster_id'] = user.id
+    if mobile != None:
+        user = get_or_create_user_cho_tot_batdongsan(self,mobile,name,siteleech_id.name)
+        update_dict['user_name_poster']=name
+        update_dict['phone_poster']=mobile
+        update_dict['poster_id'] = user.id
     
 def get_bds_dict_in_topic(self,update_dict,html,siteleech_id,only_return_price=False):
     def create_or_get_one_in_m2m_value(val):
@@ -360,19 +389,34 @@ def get_mobile_name_for_batdongsan(soup,site_name='batdongsan'):
         except:
             name = 'no name bds'
     elif site_name=='muaban':
-        mobile_and_name_soup = soup.select('div.ct-contact ')
-        name_soup = mobile_and_name_soup.select('div:nth-child(1) span')
-        name = name_soup.get_text()
-        print 'name',name
-        
-        mobile_soup = mobile_and_name_soup.select('div:nth-child(2) span b')
-        mobile = mobile_soup.get_text()
+#         mobile_and_name_soup = soup.select('div.ct-contact ')[1]
+#         print 'mobile_and_name_soup',mobile_and_name_soup
+#         name_soup = mobile_and_name_soup.select('div:nth-of-type(1) span')[0]
+#         name = name_soup.get_text()
+#         print 'name',name
+#         
+#         mobile_soup = mobile_and_name_soup.select('div:nth-of-type(2) span b')[0]
+#         mobile = mobile_soup.get_text()
+#         print 'mobile',mobile
+
+        mobile_and_name_soup = soup.select('div.ct-contact ')[0]
+        print 'mobile_and_name_soup',mobile_and_name_soup
+#         name_soup = mobile_and_name_soup.select('div:nth-of-type(1) span')[0]
+#         name = name_soup.get_text()
+#         print 'name',name
+        try:
+            mobile_soup = mobile_and_name_soup.select('div.price-name + div > b')[0]
+            mobile = mobile_soup.get_text()
+            name = mobile
+        except IndexError:
+            mobile =  None
+            name= None
         print 'mobile',mobile
         
         
         
     return mobile,name
-def get_or_create_user_cho_tot_batdongsan(self,mobile,name,type_site):
+def get_or_create_user_cho_tot_batdongsan(self,mobile,name, type_site):
     search_dict = {}
     update_dict = {}
     search_dict['phone'] = mobile

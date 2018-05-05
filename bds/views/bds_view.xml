@@ -189,6 +189,7 @@
                     <field name= "muc_gia" />
                     <field name= "muc_don_gia" />
                     <field name="muc_ti_le_don_gia" />
+                    <field name="ti_le_don_gia" string="Tỉ lệ đơn giá lớn hơn"  filter_domain="[('ti_le_don_gia','&gt;',self)]"/>
                     <field name="quan_id_selection" filter_domain="[('quan_id','=',self)]"/>
                     <filter name="ngay_dang" string="Ngày đăng bé hơn" domain="[('ngay_dang','&lt;=', self)]" help="Pickings that are late on scheduled time" />
                     <separator />
